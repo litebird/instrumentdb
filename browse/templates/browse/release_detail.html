@@ -16,4 +16,67 @@
   </a>
 </p>
 
+{% if litebird_flag %}
+<h2>Scanning strategy</h2>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Data file</th>
+      <th>&alpha; [deg]</th>
+      <th>Precession period [min]</th>
+      <th>Spin rate [RPM]</th>
+      <th>Duration [yr]</th>
+      <th>Duty cycle</th>
+      <th>CR loss</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="{% url 'data-file-view' scanning_uuid %}">Link</a></td>
+      <td>{{ spin_sun_angle_deg }}</td>
+      <td>{{ precession_period_min }}</td>
+      <td>{{ spin_rate_rpm }}</td>
+      <td>{{ mission_duration_year }}</td>
+      <td>{{ observation_duty_cycle }}</td>
+      <td>{{ cosmic_ray_loss }}</td>
+    </tr>
+  </tbody>
+</table>
+
+{% for instrument in instruments %}
+<h2>{{ instrument.name|upper }}</h2>
+
+<table class="table table-striped table-bordered">
+  <thead>
+    <tr class="text-right">
+      <th scope="col">Channel</th>
+      <th scope="col">&beta;<sub>0</sub> [GHz]</th>
+      <th scope="col">&Delta;&beta; [GHz]</th>
+      <th scope="col"># of detectors</th>
+      <th scope="col">Noise/detector [&mu;K/&radic;s]</th>
+      <th scope="col">Noise/channel [&mu;K/&radic;s]</th>
+      <th scope="col">Pol. sensitivity/detector [&mu;K/arcmin]</th>
+      <th scope="col">Pol. sensitivity/channel [&mu;K/arcmin]</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for channel in instrument.channels %}
+    <tr class="text-right">
+      <th scope="row"><a href="{% url 'data-file-view' channel.uuid %}">{{ channel.name }}</a></th>
+      <td>{{ channel.bandcenter_ghz }}</td>
+      <td>{{ channel.bandwidth_ghz }}</td>
+      <td>{{ channel.number_of_detectors }}</td>
+      <td>{{ channel.net_detector_ukrts|floatformat:1 }}</td>
+      <td>{{ channel.net_channel_ukrts|floatformat:1 }}</td>
+      <td>{{ channel.pol_sensitivity_detector_ukarcmin|floatformat:1 }}</td>
+      <td>{{ channel.pol_sensitivity_channel_ukarcmin|floatformat:1 }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endfor %}
+{% endif %}
+
 {% endblock %}

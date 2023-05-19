@@ -23,7 +23,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <a href="https://github.com/ziotom78/instrumentdb">
+  <a href="https://github.com/litebird/instrumentdb">
     <img src="images/logo.svg" alt="Logo" width="180">
   </a>
 
@@ -35,11 +35,11 @@
     <a href="https://instrumentdb.readthedocs.io/en/latest/?badge=latest"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/ziotom78/instrumentdb">View Demo</a>
+    <a href="https://github.com/litebird/instrumentdb">View Demo</a>
     ·
-    <a href="https://github.com/ziotom78/instrumentdb/issues">Report Bug</a>
+    <a href="https://github.com/litebird/instrumentdb/issues">Report Bug</a>
     ·
-    <a href="https://github.com/ziotom78/instrumentdb/issues">Request Feature</a>
+    <a href="https://github.com/litebird/instrumentdb/issues">Request Feature</a>
   </p>
 </p>
 
@@ -65,7 +65,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://github.com/ziotom78/instrumentdb)
+[![Product Name Screen Shot][product-screenshot]](https://github.com/litebird/instrumentdb)
 
 
 ### Built With
@@ -92,7 +92,7 @@ before installing InstrumentDB.
  
 1.  Clone the repo:
     ```sh
-    git clone https://github.com/ziotom78/instrumentdb.git && cd instrumentdb
+    git clone https://github.com/litebird/instrumentdb.git && cd instrumentdb
     ```
     
 2.  Install all the dependencies using `poetry`
@@ -137,7 +137,7 @@ To install Poetry, see
 
 1.  Clone the repo:
     ```sh
-    git clone https://github.com/ziotom78/instrumentdb.git && cd instrumentdb
+    git clone https://github.com/litebird/instrumentdb.git && cd instrumentdb
     ```
     
 2.  Install all the dependencies using `poetry`
@@ -182,7 +182,7 @@ For more examples, please refer to the [documentation][docs-url].
 <!-- ROADMAP -->
 ## Roadmap
 
-See the [open issues](https://github.com/ziotom78/instrumentdb/issues)
+See the [open issues](https://github.com/litebird/instrumentdb/issues)
 for a list of proposed features (and known issues).
 
 
@@ -215,10 +215,10 @@ for more information.
 
 Maurizio Tomasi -
 [@MaurizioTomasi2](https://twitter.com/@MaurizioTomasi2) -
-ziotom78{at}gmail.com
+litebird{at}gmail.com
 
 Project Link:
-[https://github.com/ziotom78/instrumentdb](https://github.com/ziotom78/instrumentdb)
+[https://github.com/litebird/instrumentdb](https://github.com/litebird/instrumentdb)
 
 
 
@@ -228,19 +228,18 @@ Project Link:
 - The LiteBIRD Instrument Model team for many ideas: Sophie
   Henrot-Versillé, Hirokazu Ishino, Tomotake Matsumura.
 
-- The ASI (Agenzia Spaziale Italiana) SSDC Team: Fabrizio Fabri, Antonio Guerra, Gemma Luzzi, Daniele Navarra, Gianluca Polenta
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[forks-shield]: https://img.shields.io/github/forks/ziotom78/instrumentdb.svg?style=flat-square
-[forks-url]: https://github.com/ziotom78/instrumentdb/network/members
-[stars-shield]: https://img.shields.io/github/stars/ziotom78/instrumentdb.svg?style=flat-square
-[stars-url]: https://github.com/ziotom78/instrumentdb/stargazers
-[issues-shield]: https://img.shields.io/github/issues/ziotom78/instrumentdb.svg?style=flat-square
-[issues-url]: https://github.com/ziotom78/instrumentdb/issues
-[license-shield]: https://img.shields.io/github/license/ziotom78/instrumentdb.svg?style=flat-square
-[license-url]: https://github.com/ziotom78/instrumentdb/blob/master/LICENSE.md
+[forks-shield]: https://img.shields.io/github/forks/litebird/instrumentdb.svg?style=flat-square
+[forks-url]: https://github.com/litebird/instrumentdb/network/members
+[stars-shield]: https://img.shields.io/github/stars/litebird/instrumentdb.svg?style=flat-square
+[stars-url]: https://github.com/litebird/instrumentdb/stargazers
+[issues-shield]: https://img.shields.io/github/issues/litebird/instrumentdb.svg?style=flat-square
+[issues-url]: https://github.com/litebird/instrumentdb/issues
+[license-shield]: https://img.shields.io/github/license/litebird/instrumentdb.svg?style=flat-square
+[license-url]: https://github.com/litebird/instrumentdb/blob/master/LICENSE.md
 [product-screenshot]: images/instrumentdb-screenshot.png
 [docs-shield]: https://readthedocs.org/projects/instrumentdb/badge/?version=latest
 [docs-url]: https://instrumentdb.readthedocs.io/en/latest/?badge=latest
