@@ -1,5 +1,7 @@
 # HEAD
 
+-   Let the user change their own passwords [#85](https://github.com/ziotom78/instrumentdb/pull/85)
+
 # Version 1.1.0
 
 -   Make the code easier to customize [#83](https://github.com/ziotom78/instrumentdb/pull/83)

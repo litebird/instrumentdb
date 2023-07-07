@@ -1,6 +1,5 @@
 # -*- encoding: utf-8 -*-
 
-import json
 import mimetypes
 from math import ceil
 from pathlib import Path
@@ -48,6 +47,18 @@ from instrumentdb.authentication import (
 )
 
 mimetypes.init()
+
+
+###########################################################################
+
+
+class UserView(DetailView):
+    model = User
+    template_name = "browse/user_detail.html"
+
+    def get_object(self):
+        obj = get_object_or_404(User, username=self.kwargs["username"])
+        return obj
 
 
 ###########################################################################

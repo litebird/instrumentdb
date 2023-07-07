@@ -1,0 +1,21 @@
+{% extends "browse/base_generic.html" %}
+{% block title %}Details for user «{{ object.username }}»{% endblock %}
+
+{% block body %}
+<h1>User {{object.username}}</h1>
+
+<ul>
+  <li>Email: {{ object.email }}</li>
+  <li>Registered on: {{ object.date_joined }}</li>
+  {% if object.is_admin %}<li>Admin</li> {% endif %}
+  {% if object.is_superuser %}<li>Superuser</li>{% endif %}
+  {% if object.is_active %}<li>Active</li>{% endif %}
+</ul>
+
+<p>
+  <a class="btn btn-primary" href="{% url 'user-change-password' %}">
+    Change password
+  </a>
+</p>
+
+{% endblock %}

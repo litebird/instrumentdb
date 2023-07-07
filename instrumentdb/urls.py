@@ -18,6 +18,7 @@ from django.urls import include, path, re_path
 
 from rest_framework import routers
 
+from browse.forms import change_password
 from browse.views import (
     DataFileView,
     DataFilePlotDownloadView,
@@ -40,6 +41,7 @@ from browse.views import (
     browse_release_view,
     login_request,
     ReleaseDownloadView,
+    UserView,
 )
 
 ################################################################################
@@ -70,6 +72,8 @@ urlpatterns = [
         name="data-file-plot-view",
     ),
     path("entities/", entity_tree_view, name="entity-list-view"),
+    path("users/<username>/", UserView.as_view(), name="user-view"),
+    path("changepassword/", change_password, name="user-change-password"),
     path("browse/entities/<pk>/", EntityView.as_view(), name="entity-view"),
     path("browse/quantities/<pk>/", QuantityView.as_view(), name="quantity-view"),
     path("browse/releases/<pk>/", ReleaseView.as_view(), name="release-view"),
