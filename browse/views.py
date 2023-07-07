@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.utils.datetime_safe import datetime
 from django.utils.timezone import utc
 from django.views.generic.base import View
@@ -128,7 +128,14 @@ class FormatSpecificationDownloadView(View):
 
         cur_object = get_object_or_404(FormatSpecification, pk=pk)
         file_data = cur_object.doc_file
-        file_data.open()
+
+        try:
+            file_data.open()
+        except ValueError:
+            raise Http404(
+                "The format specification file was not uploaded to the database"
+            )
+
         data = file_data.read()
         resp = HttpResponse(data, content_type=cur_object.doc_mime_type)
         resp["Content-Disposition"] = 'attachment; filename="{0}"'.format(
@@ -143,7 +150,11 @@ class DataFileDownloadView(View):
 
         cur_object = get_object_or_404(DataFile, pk=pk)
         file_data = cur_object.file_data
-        file_data.open()
+        try:
+            file_data.open()
+        except ValueError:
+            raise Http404("The data file was not uploaded to the database")
+
         data = file_data.read()
         resp = HttpResponse(
             data, content_type=cur_object.quantity.format_spec.file_mime_type
@@ -160,7 +171,12 @@ class DataFilePlotDownloadView(View):
 
         cur_object = get_object_or_404(DataFile, pk=pk)
         plot_file_data = cur_object.plot_file
-        plot_file_data.open()
+
+        try:
+            plot_file_data.open()
+        except ValueError:
+            raise Http404("The plot file was not uploaded to the database")
+
         data = plot_file_data.read()
         resp = HttpResponse(data, content_type=cur_object.plot_mime_type)
 
