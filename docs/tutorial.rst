@@ -401,6 +401,10 @@ we create the same object structure as the one above::
   server_url = "http://127.0.0.1:8000"
   
   # Get authentication token (login)
+  # For security reasons, you should store both username
+  # and password in a separate text file and read it before
+  # calling the following "req.post()" statement. We'll
+  # keep things simple here
   response = req.post(url=f"{server_url}/api/login",
       data={"username":"user1", "password": "passwd54321"}
   )
@@ -416,6 +420,9 @@ we create the same object structure as the one above::
   auth_header = {"Authorization": f"Token {token}"}
   
   # Create a new entity in the database
+  # Note that if you forget the `headers=auth_header` part,
+  # this command will halt with a HTTP 401 error (unauthorized
+  # request)
   response = req.post(
       url=f"{server_url}/api/entities/",
       data={ "name": "foo_python", "parent": None },

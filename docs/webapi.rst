@@ -18,8 +18,51 @@ dictionary containing the following fields:
   format of the string depends on the conventions used by the
   collaboration developing the instrument.
 - ``title``: a string containing the title of the specification document.
+- ``doc_file``: a file-like object containing the format specification document
+- ``doc_file_name``: the file name to be suggested to the user when they want to download it
+- ``doc_mime_type``: a string containing the MIME type of the specification document
 - ``file_mime_type``: a string containing the MIME type of the file
   described by this specification document (optional).
+
+Note the difference between ``doc_mime_type`` and ``file_mime_type``: the
+former pertains to the *document* (DOCX, PDF, LaTeX, …), while the latter
+refers to the *file* described by the specification document. Both are used
+as hints to your browser: when you download the specification document
+or the data file, letting your webbrowser know the MIME type can
+enable more features, e.g., a preview within the “File save” dialog.
+
+Here is an example, where we upload a Microsoft Word DOCX document describing
+how to interpret an Excel file with the details of some electronic board::
+
+  import requests as req
+
+  server = "http://127.0.0.1:8000/"
+
+  response = req.post(url=f"{server_url}/api/login",
+      data={"username":"user1", "password": "passwd54321"}
+  )
+  assert response.ok
+  auth_header = {"Authorization": "Token " + response.json()["token"]}
+
+  response = req.post(
+      server + "api/format_specs/",
+      data={
+          "document_ref": "DOC0001",
+          "title": "Specification of the electronics",
+          "doc_file_name": "DOC0001.docx",
+          # The specification document is a MS Word file…
+          "doc_mime_type": "application/vnd.openxmlformats-officedocument",
+          # …which explains how to interpret the data file, created using MS Excel
+          "file_mime_type": "application/vnd.openxmlformats-officedocument",
+      },
+      files={
+          "doc_file": open("my_specification.docx", "rb"),
+      }
+      headers=auth_header,
+  )
+  assert response.ok
+  print(response.json())
+
 
 Entities
 --------
@@ -43,13 +86,25 @@ dictionary containing the following fields:
 Here is an example in Python, it creates a new entity and then deletes
 it immediately after::
 
-  import requests
+  import requests as req
 
   server = "http://127.0.0.1:8000/"
-  req = requests.post(server + "api/entities/", data={
-      "name": "my entity",
-  })
-  print(req.json())
+
+  response = req.post(url=f"{server_url}/api/login",
+      data={"username":"user1", "password": "passwd54321"}
+  )
+  assert response.ok
+  auth_header = {"Authorization": "Token " + response.json()["token"]}
+
+  response = req.post(
+      server + "api/entities/",
+      data={
+          "name": "my entity",
+      },
+      headers=auth_header,
+  )
+  assert response.ok
+  print(response.json())
 
   # Output:
   # {'uuid': 'f89e8597-7561-4170-bec3-9837b3f32d61',
@@ -60,21 +115,22 @@ it immediately after::
   #  'quantities': []}
 
   # Now delete the entity that was created above
-  requests.delete(req.json()["url"])
+  req.delete(response.json()["url"], headers=auth_header)
 
 To alter an object, you can use the ``PATCH`` command. The following
 example creates an object and then modifies its name::
   
-  import requests
+  import requests as req
 
   server = "http://127.0.0.1:8000/"
-  req = requests.post(server + "api/entities/", data={
+  response = req.post(server + "api/entities/", data={
       "name": "my entity",
   })
-  url = req.json()["url"]
+  assert response.ok
+  url = response.json()["url"]
 
   # This command changes "my entity" into "a better name"
-  requests.patch(url, data={"name": "a better name"})
+  req.patch(url, data={"name": "a better name"})
   
 Quantities
 ----------
@@ -132,28 +188,30 @@ file itself and the plot. You can achieve this using both the ``data=``
 and ``files=`` keywords when calling ``requests.post``, like in the
 following example::
 
-    import requests
+    import requests as req
 
     server_url = "http://127.0.0.1:8000"
 
-    response = req.post(
-        url=f"{server_url}/api/login",
-        data={"username": "foo", "password": "bar"},
+    response = req.post(url=f"{server_url}/api/login",
+        data={"username":"user1", "password": "passwd54321"}
     )
+    assert response.ok
+    auth_header = {"Authorization": "Token " + response.json()["token"]}
 
-    response = requests.post(
+    response = req.post(
         url=f"{server_url}/api/data_files/",
         data={
-            name="My data file",
-            quantity=f"{server_url}/api/quantities/4a0c5e12-da9c-4c7a-923e-810a19974444/",
-            spec_version="1.0",
-            metadata="{}",
-            plot_mime_type="image/png",  # THIS IS MANDATORY IF YOU INCLUDE "plot_file" BELOW!
+            "name": "My data file",
+            "quantity": f"{server_url}/api/quantities/4a0c5e12-da9c-4c7a-923e-810a19974444/",
+            "spec_version": "1.0",
+            "metadata": "{}",
+            "plot_mime_type": "image/png",  # THIS IS MANDATORY IF YOU INCLUDE "plot_file" BELOW!
         },
         files={
             "file_data": open("/local_storage/spreadsheet.xlsx", "rb"),
             "plot_file": open("/local_storage/summary_plot.png", "rb"),
         },
+        headers=auth_header,
     )
 
     assert response.ok
@@ -195,9 +253,15 @@ approaches:
 
 Let's see each of the three approaches. The first one is the simplest::
 
-  import requests
+  import requests as req
 
   server = "http://127.0.0.1:8000/"
+
+  # Get authentication token (login)
+  response = req.post(url=f"{server_url}/api/login",
+      data={"username":"user1", "password": "passwd54321"}
+  )
+  auth_header = {"Authorization": "Token " + response.json()["token"]}
 
   # Name of the release we're going to create
   release_name = "v0.10"
@@ -209,11 +273,14 @@ Let's see each of the three approaches. The first one is the simplest::
       "http://127.0.0.1:8000/api/data_files/34c11186-2ce2-4805-9114-91ed460c6a95/",
   ]
   # Create the release
-  req = requests.post(server + "api/releases/", data={
-      "tag": release_name,
-      "comment": "dummy release",
-      "data_files": data_files,
-  })
+  response = requests.post(
+      server + "api/releases/", data={
+          "tag": release_name,
+          "comment": "dummy release",
+          "data_files": data_files,
+      },
+      headers=auth_header,
+  )
 
 Let's now consider the case where you did not pass the ``data_files``
 key in the POST command above. (For instance, you were still building
@@ -223,19 +290,23 @@ in this snippet::
 
   # We are re-using the "req" object got in the snippet above through
   # the call to `requests.post`
-  release_info = req.json()
+  release_info = response.json()
   
   # This is the URL of the release we created
-  url = req.json()["url"]
+  url = response.json()["url"]
   
   # We are re-using "tag" and "comment" from the call to `request.post`
   # above, but we might change them as well in this call, as the HTTP
   # `patch` command overwrites everything.
-  requests.patch(url, data={
-      "tag": release_info["tag"],
-      "comment": release_info["comment"],
-      "data_files": data_files,
-  })
+  requests.patch(
+      url,
+      data={
+          "tag": release_info["tag"],
+          "comment": release_info["comment"],
+          "data_files": data_files,
+      },
+      headers=auth_header,
+  )
   
 Alternatively, we can go through the opposite route and add the
 release tag to every data file in the list ``data_files``. The
@@ -243,10 +314,10 @@ following snippet is equivalent to the code above::
 
   for cur_data_file_url in data_files:
       # Retrieve the current data file
-      cur_data_file = requests.get(cur_data_file_url).json()
+      cur_data_file = req.get(cur_data_file_url, headers=auth_header).json()
 
       # Append the URL to the new release to the list of release tags
       cur_data_file["release_tags"].append(release_info["url"])
 
       # Modify the data file in the database
-      requests.patch(cur_data_file_url, data=cur_data_file)
+      req.patch(cur_data_file_url, data=cur_data_file, headers=auth_header)

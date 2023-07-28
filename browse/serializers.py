@@ -2,7 +2,7 @@
 
 import json
 
-from rest_framework import serializers, request
+from rest_framework import serializers
 from rest_framework.reverse import reverse
 from django.contrib.auth.models import User, Group
 from browse.models import Entity, Quantity, DataFile, FormatSpecification, Release
@@ -32,10 +32,16 @@ class FormatSpecificationSerializer(serializers.HyperlinkedModelSerializer):
             "url",
             "document_ref",
             "title",
+            "doc_file",
             "doc_file_name",
             "doc_mime_type",
             "file_mime_type",
         ]
+        extra_kwargs = {
+            "doc_file": {
+                "max_length": 512,
+            }
+        }
 
     def to_representation(self, instance):
         representation = super(FormatSpecificationSerializer, self).to_representation(

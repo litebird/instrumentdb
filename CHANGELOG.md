@@ -1,5 +1,7 @@
 # HEAD
 
+-   Clean up the documentation [#89](https://github.com/ziotom78/instrumentdb/pull/89)
+
 -   Raise a HTTP 404 error if the user asks to download a file that was not uploaded to the database [#87](https://github.com/ziotom78/instrumentdb/pull/87)
 
 -   Let the user change their own passwords [#85](https://github.com/ziotom78/instrumentdb/pull/85)

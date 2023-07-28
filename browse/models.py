@@ -38,19 +38,10 @@ from typing import Optional
 import git
 import json
 import yaml
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.decorators import login_required
 from django.core.files import File
 from django.db import models
 from django.utils import timezone
 from mptt.models import MPTTModel, TreeForeignKey
-from rest_framework import permissions
-from rest_framework.decorators import permission_classes
-from rest_framework.permissions import IsAuthenticated
-from django.conf import settings
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from rest_framework.authtoken.models import Token
 
 from instrumentdb import __version__
 
@@ -790,5 +781,5 @@ def update_release_file_dumps(force: bool = False):
             with json_file_path.open("rt") as json_file:
                 cur_release.json_file.save(
                     name=f"schema_{cur_release.tag}.json",
-                    content=DjangoFile(json_file),
+                    content=open(json_file, "rb"),
                 )

@@ -17,9 +17,10 @@ from django.views.generic.list import ListView
 from django.contrib.auth.models import User, Group
 from django.shortcuts import render, redirect, get_object_or_404
 
-from rest_framework import viewsets, authentication, permissions
+from rest_framework import viewsets, permissions
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.mixins import UpdateModelMixin
 
 import instrumentdb
 from browse.models import Entity, Quantity, DataFile, FormatSpecification, Release
@@ -45,6 +46,8 @@ from instrumentdb.authentication import (
     expires_in,
     is_token_expired,
 )
+
+ADMIN_ONLY_HTTP_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
 
 mimetypes.init()
 
@@ -258,10 +261,11 @@ class FormatSpecificationViewSet(viewsets.ModelViewSet):
         instrumentdb.authentication.ExpiringTokenAuthentication,
         SessionAuthentication,
     ]
+
     # permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        if self.request.method in ["PUT", "DELETE"]:
+        if self.request.method in ADMIN_ONLY_HTTP_METHODS:
             return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
 
@@ -280,7 +284,7 @@ class EntityViewSet(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        if self.request.method in ["PUT", "DELETE"]:
+        if self.request.method in ADMIN_ONLY_HTTP_METHODS:
             return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
 
@@ -298,7 +302,7 @@ class QuantityViewSet(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        if self.request.method in ["PUT", "DELETE"]:
+        if self.request.method in ADMIN_ONLY_HTTP_METHODS:
             return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
 
@@ -314,7 +318,7 @@ class DataFileViewSet(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        if self.request.method in ["PUT", "DELETE"]:
+        if self.request.method in ADMIN_ONLY_HTTP_METHODS:
             return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
 
@@ -333,7 +337,7 @@ class ReleaseViewSet(viewsets.ModelViewSet):
     # permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
-        if self.request.method in ["PUT", "DELETE"]:
+        if self.request.method in ADMIN_ONLY_HTTP_METHODS:
             return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
 
