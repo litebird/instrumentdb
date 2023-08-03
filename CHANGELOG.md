@@ -1,5 +1,9 @@
 # HEAD
 
+-   Implement the `delete-all` command [#91](https://github.com/ziotom78/instrumentdb/pull/91)
+
+-   Implement the `delete-data-files` command [#90](https://github.com/ziotom78/instrumentdb/pull/90)
+
 -   Clean up the documentation [#89](https://github.com/ziotom78/instrumentdb/pull/89)
 
 -   Raise a HTTP 404 error if the user asks to download a file that was not uploaded to the database [#87](https://github.com/ziotom78/instrumentdb/pull/87)

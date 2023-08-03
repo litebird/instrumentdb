@@ -10,6 +10,7 @@ Here is the list:
 - :ref:`import_cmd`
 - :ref:`updatedb_cmd`
 - :ref:`deletedatafiles_cmd`
+- :ref:`delete_all`
 
 These commands can be executed from the command line using the syntax
 
@@ -64,4 +65,12 @@ if you fear that these files got corrupted.
 Delete a set of data files from the database. You can specify a release tag
 using the ``--release`` command-line switch: in this case, all the data files
 belonging to the data release will be deleted. Any data file belonging to more
-than one data release will be left untouched.
+than one data release will be left untouched, in order not to leave
+dangling references.
+
+.. _deleteall_cmd:
+``delete-all``
+--------------
+
+This command deletes all the entities, quantities, data files, and
+format specifications from the database.
