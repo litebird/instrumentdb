@@ -1,5 +1,7 @@
 # HEAD
 
+-   The tree of entities is now collapsible [#94](https://github.com/ziotom78/instrumentdb/pull/94)
+
 -   Extend test coverage, fix issues in the code [#93](https://github.com/ziotom78/instrumentdb/pull/93)
 
 -   Validate the `metadata` field of data files [#92](https://github.com/ziotom78/instrumentdb/pull/92)

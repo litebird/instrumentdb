@@ -9,14 +9,14 @@
   <ul class="list-group list-group-flush">
     {% recursetree object_list %}
     <li class="list-group-item">
-      <div class="media-body">
-        <a href="{% url 'entity-view' node.uuid %}">{{ node.name|capfirst }}</a>
+      <details>
+        <summary><a href="{% url 'entity-view' node.uuid %}">{{ node.name|capfirst }}</a></summary>
         {% if not node.is_leaf_node %}
-        <ul class="children">
+        <ul class="children nested">
           {{ children }}
         </ul>
         {% endif %}
-      </div>
+      </details>
     </li>
     {% endrecursetree %}
   </ul>
