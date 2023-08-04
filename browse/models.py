@@ -38,6 +38,7 @@ from typing import Optional
 import git
 import json
 import yaml
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
 from django.utils import timezone
@@ -165,6 +166,18 @@ MIME_TO_DOC_EXTENSION = {x.mime_type: x.file_extension for x in DOCUMENT_FILE_TY
 MIME_TO_IMAGE_EXTENSION = {x.mime_type: x.file_extension for x in IMAGE_FILE_TYPES}
 
 
+def validate_json(value):
+    """Check that `value` is a valid JSON record"""
+
+    try:
+        json.loads(value)
+    except json.JSONDecodeError as err:
+        raise ValidationError(
+            'Invalid JSON: "%(value)s", reason: %(err)s',
+            params={"value": value, "err": str(err)},
+        )
+
+
 class Entity(MPTTModel):
     uuid = models.UUIDField(
         primary_key=True, unique=True, default=uuid.uuid4, editable=False
@@ -185,6 +198,11 @@ class Entity(MPTTModel):
 
 
 def format_spec_directory_path(instance, filename):
+    """This is called by the FileField of a format spec
+
+    It returns the path where to save a format specification
+    """
+
     # The ".split" trick enables proper treatment of MIME types like
     # "text/markdown; charset=UTF-8", because it removes what comes
     # after the ";"
@@ -300,7 +318,6 @@ class DataFile(models.Model):
     upload_date = models.DateTimeField(
         "date when the file was uploaded",
         default=timezone.now,
-        editable=False,
         help_text="Date when the file was added to the database",
     )
     metadata = models.TextField(
@@ -308,9 +325,10 @@ class DataFile(models.Model):
         max_length=32768,
         blank=True,
         help_text="JSON record containing metadata for the file",
+        validators=[validate_json],
     )
     file_data = models.FileField(
-        "File",
+        "file",
         blank=True,
         upload_to=data_file_directory_path,
         help_text="File contents (when present)",
@@ -333,7 +351,7 @@ class DataFile(models.Model):
         + "produce this data file",
     )
     plot_file = models.FileField(
-        "Image file",
+        "image file",
         blank=True,
         upload_to=plot_file_directory_path,
         help_text="Plot of the data in the file (optional)",
@@ -434,7 +452,7 @@ class Release(models.Model):
         return result
 
 
-###################################################################################################
+############################################################################
 
 
 class DumpOutputFormat(Enum):

@@ -5,7 +5,14 @@ import json
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 from django.contrib.auth.models import User, Group
-from browse.models import Entity, Quantity, DataFile, FormatSpecification, Release
+from browse.models import (
+    Entity,
+    Quantity,
+    DataFile,
+    FormatSpecification,
+    Release,
+    validate_json,
+)
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -100,6 +107,15 @@ class QuantitySerializer(serializers.HyperlinkedModelSerializer):
         ]
 
 
+def serializer_validate_json(value):
+    from django.core.exceptions import ValidationError
+
+    try:
+        validate_json(value)
+    except ValidationError as err:
+        raise serializers.ValidationError(detail=err.message, code=err.code)
+
+
 class JSONField(serializers.Field):
     def to_representation(self, value):
         if isinstance(value, str):
@@ -128,7 +144,7 @@ class DataFileSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="datafile-detail", read_only=True
     )
-    metadata = JSONField()
+    metadata = JSONField(validators=[serializer_validate_json])
 
     class Meta:
         model = DataFile

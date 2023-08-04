@@ -1,5 +1,7 @@
 # -*- encoding: utf-8 -*-
 
+from io import StringIO
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -9,18 +11,27 @@ from browse.models import (
     Quantity,
     DataFile,
     Release,
-    Account,
 )
+from django.contrib.auth.models import User
 
 
 TEST_ACCOUNT_EMAIL = "test@localhost"
 TEST_ACCOUNT_USER = "test_user"
 
+TEST_ACCOUNT_ADMIN_EMAIL = "admin@localhost"
+TEST_ACCOUNT_ADMIN_USER = "test_admin"
 
-def _create_test_user_and_authenticate(client):
-    test_user = Account.objects.create(
-        email=TEST_ACCOUNT_EMAIL, username=TEST_ACCOUNT_USER
-    )
+
+def _create_test_user_and_authenticate(client, superuser: bool):
+    if superuser:
+        test_user = User.objects.create_superuser(
+            email=TEST_ACCOUNT_ADMIN_EMAIL, username=TEST_ACCOUNT_ADMIN_USER
+        )
+    else:
+        test_user = User.objects.create_user(
+            email=TEST_ACCOUNT_EMAIL, username=TEST_ACCOUNT_USER
+        )
+
     client.force_authenticate(user=test_user)
 
 
@@ -29,6 +40,8 @@ def create_format_spec(client, document_ref):
 
     url = reverse("formatspecification-list")
 
+    format_spec_file = StringIO("Test file")
+
     response = client.post(
         url,
         format="json",
@@ -36,6 +49,9 @@ def create_format_spec(client, document_ref):
             "document_ref": document_ref,
             "title": "My dummy document",
             "file_mime_type": "application/text",
+        },
+        files={
+            "doc_file": format_spec_file,
         },
     )
     return response
@@ -77,6 +93,8 @@ def create_data_file_spec(
 
     url = reverse("datafile-list")
 
+    data_file = StringIO("1,2,3,4,5")
+
     response = client.post(
         url,
         format="json",
@@ -86,6 +104,9 @@ def create_data_file_spec(
             "quantity": quantity,
             "spec_version": spec_version,
             "release_tags": release_tags,
+        },
+        files={
+            "file_data": data_file,
         },
     )
     return response
@@ -109,12 +130,13 @@ def create_release_spec(client, tag, comment="", data_files=[]):
 
 
 class FormatSpecificationTests(APITestCase):
+    def setUp(self) -> None:
+        _create_test_user_and_authenticate(client=self.client, superuser=True)
+
     def test_create_format_spec(self):
         """
         Ensure we can create a new FormatSpecification object.
         """
-
-        _create_test_user_and_authenticate(self.client)
 
         response = create_format_spec(self.client, "DUMMY_REF_001")
 
@@ -126,12 +148,13 @@ class FormatSpecificationTests(APITestCase):
 
 
 class EntityTests(APITestCase):
+    def setUp(self) -> None:
+        _create_test_user_and_authenticate(client=self.client, superuser=True)
+
     def test_create_entity(self):
         """
         Ensure we can create a new quantity object.
         """
-
-        _create_test_user_and_authenticate(self.client)
 
         response = create_entity_spec(self.client, "test_entity")
 
@@ -142,10 +165,13 @@ class EntityTests(APITestCase):
 
 class QuantityTests(APITestCase):
     def setUp(self):
-        _create_test_user_and_authenticate(self.client)
+        _create_test_user_and_authenticate(client=self.client, superuser=True)
 
         self.formatspec_response = create_format_spec(self.client, "DUMMY_REF_001")
+        self.assertEqual(self.formatspec_response.status_code, status.HTTP_201_CREATED)
+
         self.entity_response = create_entity_spec(self.client, "test_entity")
+        self.assertEqual(self.entity_response.status_code, status.HTTP_201_CREATED)
 
     def test_create_quantity(self):
         """
@@ -155,8 +181,8 @@ class QuantityTests(APITestCase):
         response = create_quantity_spec(
             self.client,
             name="test_quantity",
-            entity=self.entity_response.json()["url"],
-            format_spec=self.formatspec_response.json()["url"],
+            entity=self.entity_response.data["url"],
+            format_spec=self.formatspec_response.data["url"],
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -166,16 +192,21 @@ class QuantityTests(APITestCase):
 
 class DataFileTests(APITestCase):
     def setUp(self):
-        _create_test_user_and_authenticate(self.client)
+        _create_test_user_and_authenticate(client=self.client, superuser=True)
 
         self.formatspec_response = create_format_spec(self.client, "DUMMY_REF_001")
+        self.assertEqual(self.formatspec_response.status_code, status.HTTP_201_CREATED)
+
         self.entity_response = create_entity_spec(self.client, "test_entity")
+        self.assertEqual(self.entity_response.status_code, status.HTTP_201_CREATED)
+
         self.quantity_response = create_quantity_spec(
             self.client,
             name="test_quantity",
-            entity=self.entity_response.json()["url"],
-            format_spec=self.formatspec_response.json()["url"],
+            entity=self.entity_response.data["url"],
+            format_spec=self.formatspec_response.data["url"],
         )
+        self.assertEqual(self.quantity_response.status_code, status.HTTP_201_CREATED)
 
     def test_create_datafile(self):
         """
@@ -185,44 +216,61 @@ class DataFileTests(APITestCase):
             self.client,
             name="test_datafile",
             metadata={"a": 10, "b": "hello"},
-            quantity=self.quantity_response.json()["url"],
+            quantity=self.quantity_response.data["url"],
         )
 
         # Check the result of the POST call
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(DataFile.objects.count(), 1)
-        self.assertEqual(DataFile.objects.get().name, "test_datafile")
+
+        data_file_obj = DataFile.objects.get()
+        self.assertEqual(data_file_obj.name, "test_datafile")
+        self.assertEqual(data_file_obj.full_path, "test_entity/test_datafile")
 
         # Now get the object from the database and check that
         # everything looks ok
-        response = self.client.get(response.json()["url"])
+        response = self.client.get(response.data["url"])
         json = response.json()
 
         assert "quantity" in json
-        self.assertEqual(json["quantity"], self.quantity_response.json()["url"])
+        self.assertEqual(json["quantity"], self.quantity_response.data["url"])
 
         assert "metadata" in json
         self.assertEqual(json["metadata"]["a"], 10)
         self.assertEqual(json["metadata"]["b"], "hello")
 
+    def test_create_datafile_with_wrong_metadata(self):
+        """
+        Ensure we can create a new DataFile object.
+        """
+        response = create_data_file_spec(
+            self.client,
+            name="test_datafile",
+            metadata="a b",  # This is invalid JSON!
+            quantity=self.quantity_response.data["url"],
+        )
+
+        # Check the result of the POST call
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 class ReleaseTests(APITestCase):
     def setUp(self):
-        _create_test_user_and_authenticate(self.client)
+        _create_test_user_and_authenticate(client=self.client, superuser=True)
 
         self.formatspec_response = create_format_spec(self.client, "DUMMY_REF_001")
         self.entity_response = create_entity_spec(self.client, "test_entity")
         self.quantity_response = create_quantity_spec(
             self.client,
             name="test_quantity",
-            entity=self.entity_response.json()["url"],
-            format_spec=self.formatspec_response.json()["url"],
+            entity=self.entity_response.data["url"],
+            format_spec=self.formatspec_response.data["url"],
         )
         self.datafile_response = create_data_file_spec(
             self.client,
             name="test_datafile",
             metadata={"a": 10, "b": "hello"},
-            quantity=self.quantity_response.json()["url"],
+            quantity=self.quantity_response.data["url"],
         )
 
     def test_create_release(self):
@@ -237,14 +285,14 @@ class ReleaseTests(APITestCase):
         self.assertEqual(Release.objects.get().tag, "v1.0")
 
         # Add a datafile to the release
-        rel_url = response.json()["url"]
+        rel_url = response.data["url"]
         response = self.client.patch(
             rel_url,
             format="json",
             data={
                 "tag": "v1.0",
                 "comment": "",
-                "data_files": [self.datafile_response.json()["url"]],
+                "data_files": [self.datafile_response.data["url"]],
             },
         )
         response = self.client.get(rel_url)
@@ -257,4 +305,59 @@ class ReleaseTests(APITestCase):
             "/releases/v1.0/test_entity/test_quantity/", format="json"
         )
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
-        assert response.url in self.datafile_response.json()["url"]
+        assert response.url in self.datafile_response.data["url"]
+
+
+class AuthenticateTest(APITestCase):
+    def setUp(self) -> None:
+        # This user has superpowers, because we need to populate the database
+        _create_test_user_and_authenticate(client=self.client, superuser=True)
+
+        self.formatspec_response = create_format_spec(self.client, "DUMMY_REF_001")
+        self.entity_response = create_entity_spec(self.client, "test_entity")
+        self.quantity_response = create_quantity_spec(
+            self.client,
+            name="test_quantity",
+            entity=self.entity_response.data["url"],
+            format_spec=self.formatspec_response.data["url"],
+        )
+        self.datafile_response = create_data_file_spec(
+            self.client,
+            name="test_datafile",
+            metadata={"a": 10, "b": "hello"},
+            quantity=self.quantity_response.data["url"],
+        )
+
+        # This user has no superpowers, and it's what we're going to use in the
+        # tests
+        _create_test_user_and_authenticate(client=self.client, superuser=False)
+
+    def testDenyCreationOfFormatSpec(self):
+        response = create_format_spec(
+            client=self.client, document_ref="ThisShouldTriggerAnError"
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def testDenyCreationOfEntity(self):
+        response = create_entity_spec(
+            client=self.client, name="ThisShouldTriggerAnError", parent=None
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def testDenyCreationOfQuantity(self):
+        response = create_quantity_spec(
+            client=self.client,
+            name="ThisShouldTriggerAnError",
+            entity=self.entity_response.data["url"],
+            format_spec=self.formatspec_response.data["url"],
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def testDenyCreationOfDataFile(self):
+        response = create_data_file_spec(
+            client=self.client,
+            name="ThisShouldTriggerAnError",
+            metadata="",
+            quantity=self.quantity_response.data["url"],
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

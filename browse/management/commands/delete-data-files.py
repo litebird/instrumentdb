@@ -72,9 +72,7 @@ class Command(BaseCommand):
             )
             return
 
-        print(
-            f"Found {num_of_objects} data file(s) out of {len(list_of_uuids)}"
-        )
+        print(f"Found {num_of_objects} data file(s) out of {len(list_of_uuids)}")
 
         start_time = time.monotonic()
         queryset.delete()
@@ -85,4 +83,6 @@ class Command(BaseCommand):
 
         for cur_release, cur_num_of_objs in num_of_objects_in_releases.items():
             Release.objects.filter(tag=cur_release).delete()
-            print(f"Release {cur_release} deleted, it contained {cur_num_of_objs} data files")
+            print(
+                f"Release {cur_release} deleted, it contained {cur_num_of_objs} data files"
+            )

@@ -281,7 +281,7 @@ class Command(BaseCommand):
                     plot_fp = open(file_path, "rb")
                 except FileNotFoundError:
                     file_path = (
-                        self.attachment_source_path / "plot_files" / plot_file_name
+                        self.attachment_source_path / "plot_files" / plot_filename
                     )
                     plot_fp = open(file_path, "rb")
                 plot_file = File(plot_fp, "rb")

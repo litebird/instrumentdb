@@ -341,7 +341,7 @@ class ReleaseViewSet(viewsets.ModelViewSet):
             return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
 
-    lookup_value_regex = "[\w.]+"
+    lookup_value_regex = "[\\w.]+"
     queryset = Release.objects.all()
     serializer_class = ReleaseSerializer
 

@@ -40,8 +40,6 @@ class ExpiringTokenAuthentication(TokenAuthentication):
     """
 
     def authenticate_credentials(self, key):
-        model = self.get_model()
-
         try:
             token = Token.objects.get(key=key)
         except Token.DoesNotExist:

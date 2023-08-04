@@ -1,5 +1,9 @@
 # HEAD
 
+-   Extend test coverage, fix issues in the code [#93](https://github.com/ziotom78/instrumentdb/pull/93)
+
+-   Validate the `metadata` field of data files [#92](https://github.com/ziotom78/instrumentdb/pull/92)
+
 -   Implement the `delete-all` command [#91](https://github.com/ziotom78/instrumentdb/pull/91)
 
 -   Implement the `delete-data-files` command [#90](https://github.com/ziotom78/instrumentdb/pull/90)
