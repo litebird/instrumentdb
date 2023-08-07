@@ -7,6 +7,14 @@
 <ul>
   <li>Release date: {{ object.rel_date }}</li>
   <li>Comment: {{ object.comment }}</li>
+  {% if object.release_document %}
+  <li>
+    Release document:
+    <a href="{% url 'release-document-download-view' object.tag %}" target="_blank" rel="noopener noreferrer">
+      download link
+    </a>
+  </li>
+  {% endif %}
   <li>Number of data files: {{ object.data_files.all|length }}</li>
 </ul>
 

@@ -131,7 +131,18 @@ example creates an object and then modifies its name::
 
   # This command changes "my entity" into "a better name"
   req.patch(url, data={"name": "a better name"})
-  
+
+You can also access an entity deeply nested in the tree using
+the url http://server/tree/PATH. The ``PATH`` part is a nested
+string of entities separated by ``/``, like for instance
+``http://server/tree/instrument/electronic_board/board0``.
+(Beware that InstrumentDB follows the HTTP protocol and returns
+a HTTP 302 ``FOUND`` signal, so your library of choice might
+need a further ``GET`` call to follow the alias. More advanced
+libraries do this automatically: this is the case of the ``requests``
+library we are using in these examples.)
+
+
 Quantities
 ----------
 
@@ -148,6 +159,40 @@ JSON record containing these keys:
 - ``parent_entity``: the URL to an entity
 - ``data_files``: a list of URLs for each data file. Passing ``[]`` is
   ok.
+
+You can also access a quantity deeply nested in the tree of entities
+using a technique similar to the one described above for entities.
+If you are looking for a quantity named ``QUANTITY_NAME``, buried in
+a deep branch of the tree of entities, you can use the url
+http://server/tree/PATH/QUANTITY_NAME/, where the ``PATH`` part
+is a nested string of entities separated by ``/``.
+(Beware that InstrumentDB follows the HTTP protocol and returns
+a HTTP 302 ``FOUND`` signal, so your library of choice might
+need a further ``GET`` call to follow the alias. More advanced
+libraries do this automatically: this is the case of the ``requests``
+library we are using in these examples.)
+
+As an example, suppose that the tree of entities is the following:
+
+.. code-block:: text
+
+   instrument
+   |
+   +-- electronic_board
+   |
+   +-- telescope
+       |
+       +--- mirror1
+       |
+       +--- mirror2
+
+
+You can retrieve the entity for ``mirror2`` through the URL
+
+.. code-block:: text
+
+    http://server/tree/instrument/telescope/mirror2
+
 
 Data files
 ----------
@@ -224,6 +269,33 @@ pass ``plot_file`` like in the example above, because this will be used
 to determine how to show the image when browsing the database through the
 web interface.
 
+If a data file is part of a release (see the section :ref:`Releases` below),
+you can access it using the url http://server/releases/RELEASE/PATH/QUANTITY,
+where ``RELEASE`` is the name of the release, ``PATH`` is the sequence of
+of entity names separated by ``/``, and ``QUANTITY`` is the quantity which
+hosts the data file. For instance, if the tree of entities is the following:
+
+.. code-block:: text
+
+   instrument
+   |
+   +-- electronic_board
+   |
+   +-- telescope
+       |
+       +--- mirror1
+       |
+       +--- mirror2
+
+and the quantity you are looking for is the CAD for ``mirror2`` that
+is stored under the quantity ``design_cad``, you can access the CAD
+that was saved in release ``v2.03`` using the path
+
+.. code-block:: text
+
+    http://server/releases/v2.03/instrument/telescope/mirror2
+
+.. _releases:
 Releases
 --------
 

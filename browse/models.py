@@ -29,6 +29,7 @@ in the database:
 from collections import namedtuple, OrderedDict
 from dataclasses import dataclass
 from enum import Enum
+import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -304,8 +305,26 @@ def data_file_directory_path(instance, filename):
 
 
 def plot_file_directory_path(instance, filename):
-    ext = MIME_TO_IMAGE_EXTENSION[instance.plot_mime_type.split(";")[0]]
-    return Path("plot_files") / f"{instance.uuid}_{instance.name}.{ext}"
+    try:
+        ext = "." + MIME_TO_IMAGE_EXTENSION[instance.plot_mime_type.split(";")[0]]
+    except KeyError:
+        logging.warning("unknown MIME type '%s'", instance.plot_mime_type)
+        ext = ""
+
+    return Path("plot_files") / f"{instance.uuid}_{instance.name}{ext}"
+
+
+def release_document_directory_path(instance, filename):
+    try:
+        ext = (
+            "."
+            + MIME_TO_IMAGE_EXTENSION[instance.release_document_mime_type.split(";")[0]]
+        )
+    except KeyError:
+        logging.warning("unknown MIME type '%s'", instance.release_document_mime_type)
+        ext = ""
+
+    return Path("release_documents") / f"{instance.tag}{ext}"
 
 
 class DataFile(models.Model):
@@ -415,6 +434,22 @@ class Release(models.Model):
     )
 
     comment = models.CharField(max_length=4096, blank=True, help_text="Free-form text")
+
+    release_document = models.FileField(
+        "release document",
+        null=True,
+        upload_to=release_document_directory_path,
+        help_text="Document accompanying the release (optional)",
+    )
+
+    release_document_mime_type = models.CharField(
+        "MIME type of the specification document",
+        max_length=256,
+        choices=[(x.mime_type, x.description) for x in DOCUMENT_FILE_TYPES],
+        default=DOCUMENT_FILE_TYPES[0].mime_type,
+        help_text="This specifies the MIME type of the downloadable copy "
+        + "of the release document",
+    )
 
     json_file = models.FileField(
         blank=True,

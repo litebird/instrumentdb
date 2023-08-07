@@ -1,16 +1,16 @@
 # -*- encoding: utf-8 -*-
 
+from datetime import datetime
+from datetime import timezone
 import mimetypes
 from math import ceil
 from pathlib import Path
+from typing import List
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, Http404
-from django.utils.datetime_safe import datetime
-from django.utils.timezone import utc
 from django.views.generic.base import View
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
@@ -21,6 +21,7 @@ from rest_framework import viewsets, permissions
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.mixins import UpdateModelMixin
+from rest_framework.pagination import PageNumberPagination
 
 import instrumentdb
 from browse.models import Entity, Quantity, DataFile, FormatSpecification, Release
@@ -141,9 +142,14 @@ class FormatSpecificationDownloadView(View):
 
         data = file_data.read()
         resp = HttpResponse(data, content_type=cur_object.doc_mime_type)
-        resp["Content-Disposition"] = 'attachment; filename="{0}"'.format(
-            Path(cur_object.doc_file_name).name
-        )
+
+        if cur_object.doc_file_name is not None and cur_object.doc_file_name != "":
+            file_name = Path(cur_object.doc_file_name).name
+        else:
+            file_name = cur_object.document_ref + mimetypes.guess_extension(
+                cur_object.doc_mime_type
+            )
+        resp["Content-Disposition"] = 'filename="{0}"'.format(file_name)
         return resp
 
 
@@ -186,6 +192,28 @@ class DataFilePlotDownloadView(View):
         resp["Content-Disposition"] = 'attachment; filename="{name}{ext}"'.format(
             name=Path(cur_object.name).name,
             ext=mimetypes.guess_extension(cur_object.plot_mime_type),
+        )
+        return resp
+
+
+class ReleaseDocumentDownloadView(View):
+    def get(self, request, pk):
+        "Allow the user to download a release document"
+
+        cur_object = get_object_or_404(Release, pk=pk)
+        release_document_data = cur_object.release_document
+
+        try:
+            release_document_data.open()
+        except ValueError:
+            raise Http404("The release document was not uploaded to the database")
+
+        data = release_document_data.read()
+        resp = HttpResponse(data, content_type=cur_object.release_document_mime_type)
+
+        resp["Content-Disposition"] = 'filename="{name}{ext}"'.format(
+            name=cur_object.tag,
+            ext=mimetypes.guess_extension(cur_object.release_document_mime_type),
         )
         return resp
 
@@ -326,6 +354,12 @@ class DataFileViewSet(viewsets.ModelViewSet):
     serializer_class = DataFileSerializer
 
 
+class ReleasePagination(PageNumberPagination):
+    page_size = 1
+    page_size_query_param = "page_size"
+    max_page_size = 3
+
+
 class ReleaseViewSet(viewsets.ModelViewSet):
     # Enable dots to be used in release tag names. See
     # https://stackoverflow.com/questions/27963899/django-rest-framework-using-dot-in-url
@@ -334,7 +368,7 @@ class ReleaseViewSet(viewsets.ModelViewSet):
         instrumentdb.authentication.ExpiringTokenAuthentication,
         SessionAuthentication,
     ]
-    # permission_classes = [permissions.IsAuthenticated]
+    pagination_class = ReleasePagination
 
     def get_permissions(self):
         if self.request.method in ADMIN_ONLY_HTTP_METHODS:
@@ -349,7 +383,43 @@ class ReleaseViewSet(viewsets.ModelViewSet):
 ################################################################################
 
 
-def release_view(request, rel_name, reference, browse_view=False):
+def navigate_tree_of_entities(url_components: List[str]) -> Entity:
+    cur_obj = get_object_or_404(Entity, name=url_components[0])
+    for comp in url_components[1:-1]:
+        cur_obj = get_object_or_404(cur_obj.get_children(), name=comp)
+
+    last_name = url_components[-1]
+    if last_name.endswith("/"):
+        last_name = last_name[:-1]
+
+    try:
+        return Quantity.objects.get(name=last_name)
+    except Quantity.DoesNotExist:
+        try:
+            return Entity.objects.get(name=last_name)
+        except Entity.DoesNotExist:
+            raise Http404(
+                f"No matches for URL {url_components}, cannot decide "
+                f"whether {last_name} is an entity or a quantity"
+            )
+
+
+def entity_reference_view(request, reference: str):
+    """
+    Access an entity through its path
+
+    If `reference` is `/satellite/LFT`, the result of this
+    function will be a redirect to the
+    """
+    cur_obj = navigate_tree_of_entities(url_components=reference.split("/"))
+
+    if isinstance(cur_obj, Quantity):
+        return redirect("quantity-detail", cur_obj.uuid)
+    else:
+        return redirect("entity-detail", cur_obj.uuid)
+
+
+def release_view(request, rel_name: str, reference: str, browse_view=False):
     # If browse_view is True, redirect to browse/data_files/uuid
     # If browse_view is False, redirect to api/data_files/uuid
 
@@ -367,13 +437,10 @@ def release_view(request, rel_name, reference, browse_view=False):
     #      sequence of entities         quantity
 
     url_components = reference.split("/")
+    cur_obj = navigate_tree_of_entities(url_components=url_components[:-1])
+
     quantity_name = url_components[-1]
-
-    cur_queryset = get_object_or_404(Entity, name=url_components[0])
-    for comp in url_components[1:-1]:
-        cur_queryset = get_object_or_404(cur_queryset.get_children(), name=comp)
-
-    quantity = get_object_or_404(cur_queryset.quantities, name=quantity_name)
+    quantity = get_object_or_404(cur_obj.quantities, name=quantity_name)
     data_file = get_object_or_404(quantity.data_files, release_tags__tag=release.tag)
 
     if browse_view:
@@ -415,7 +482,7 @@ def login_request(request):
 
     if not created and not is_token_expired(token):
         # update the created time of the token to keep it valid
-        token.created = datetime.utcnow().replace(tzinfo=utc)
+        token.created = datetime.utcnow().replace(tzinfo=timezone.utc)
         token.save()
 
     # token_expire_handler will check, if the token is expired it will generate new one

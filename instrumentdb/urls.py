@@ -28,6 +28,7 @@ from browse.views import (
     FormatSpecificationListView,
     FormatSpecificationDownloadView,
     QuantityView,
+    ReleaseDocumentDownloadView,
     ReleaseListView,
     ReleaseView,
     UserViewSet,
@@ -42,6 +43,7 @@ from browse.views import (
     login_request,
     ReleaseDownloadView,
     UserView,
+    entity_reference_view,
 )
 
 ################################################################################
@@ -83,6 +85,11 @@ urlpatterns = [
         name="release-download-view",
     ),
     path(
+        "browse/releases/<pk>/document/",
+        ReleaseDocumentDownloadView.as_view(),
+        name="release-document-download-view",
+    ),
+    path(
         "browse/format_specs/",
         FormatSpecificationListView.as_view(),
         name="format-spec-list-view",
@@ -99,6 +106,7 @@ urlpatterns = [
         r"^browse/releases/(?P<rel_name>[\w.-]+)/(?P<reference>[\w./-]+)/$",
         browse_release_view,
     ),
+    re_path(r"^tree/(?P<reference>[\w./-]+)/$", entity_reference_view),
     path("api/login", login_request),
     path("accounts/", include("django.contrib.auth.urls")),
 ]

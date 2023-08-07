@@ -107,12 +107,13 @@ class QuantitySerializer(serializers.HyperlinkedModelSerializer):
         ]
 
 
-def serializer_validate_json(value):
+def serializer_validate_json(value) -> None:
     from django.core.exceptions import ValidationError
 
     try:
         validate_json(value)
     except ValidationError as err:
+        print(f"validate_json failed with {value=}")
         raise serializers.ValidationError(detail=err.message, code=err.code)
 
 
@@ -200,6 +201,9 @@ class ReleaseSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="release-detail", read_only=True
     )
+    release_document_url = serializers.HyperlinkedRelatedField(
+        view_name="release-document-download-view", read_only=True
+    )
 
     class Meta:
         model = Release
@@ -208,8 +212,17 @@ class ReleaseSerializer(serializers.HyperlinkedModelSerializer):
             "url",
             "rel_date",
             "comment",
+            "release_document",
+            "release_document_mime_type",
+            "release_document_url",
             "data_files",
         ]
+        extra_kwargs = {
+            "release_document": {
+                "max_length": 512,
+                "allow_empty_file": True,
+            },
+        }
         ordering = ["-rel_date"]
 
     def to_representation(self, instance):

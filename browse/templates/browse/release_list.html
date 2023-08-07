@@ -12,6 +12,7 @@
           <th scope="col">Version</th>
           <th scope="col">Date</th>
           <th scope="col">Comment</th>
+          <th scope="col">Document</th>
           <th scope="col">JSON file</th>
       </tr>
       </thead>
@@ -23,6 +24,13 @@
           </th>
           <td>{{ obj.rel_date }}</td>
           <td>{{ obj.comment }}</td>
+          <td>
+              {% if obj.release_document %}
+              <a href="{% url 'release-document-download-view' obj.tag %}" target="_blank" rel="noopener noreferrer">
+                Link
+              </a>
+              {% endif %}
+          </td>
           <td>
               <a class="btn btn-primary" href="{% url 'release-download-view' obj.tag %}">
                 Download ({{ obj.json_file.size|filesizeformat }})

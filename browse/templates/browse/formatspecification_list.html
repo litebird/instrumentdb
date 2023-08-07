@@ -17,7 +17,7 @@
   {% for spec in object_list %}
   <tr>
     <td>
-      <a href="{% url 'format-spec-download-view' spec.uuid %}">{{ spec.title }}</a>
+      <a href="{% url 'format-spec-download-view' spec.uuid %}" target="_blank" rel="noopener noreferrer">{{ spec.title }}</a>
     </td>
     <td>{{ spec.document_ref}}</td>
     <td>{{ spec.file_mime_type }}</td>

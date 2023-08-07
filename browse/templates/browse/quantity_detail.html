@@ -6,7 +6,7 @@
 
 <ul>
   <li>Format specification:
-    <a href="{% url 'format-spec-download-view' object.format_spec.uuid %}">
+    <a href="{% url 'format-spec-download-view' object.format_spec.uuid %}" target="_blank" rel="noopener noreferrer">
       {{ object.format_spec }}</a></li>
   <li>Entity:
     <a href="{% url 'entity-view' object.parent_entity.uuid %}">
