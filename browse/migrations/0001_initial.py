@@ -332,7 +332,7 @@ class Migration(migrations.Migration):
                     models.FileField(
                         blank=True,
                         help_text="Plot of the data in the file (optional)",
-                        upload_to=browse.models.plot_file_directory_path,
+                        upload_to=browse.models.full_plot_file_path,
                         verbose_name="Image file",
                     ),
                 ),

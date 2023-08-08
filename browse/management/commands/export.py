@@ -55,6 +55,24 @@ it is not present, all releases will be included in the output.
 """,
         )
         parser.add_argument(
+            "--skip-empty-entities",
+            action="store_true",
+            help="""
+If set, skip all those entities that have no sub-entities nor
+quantities. See also --skip-empty-quantities.
+""",
+        )
+        parser.add_argument(
+            "--skip-empty-quantities",
+            action="store_true",
+            help="""
+If set, skip all those quantities that have no data files.
+(This can be useful if you are using --release=REL to
+export just one release, as some quantities might have been
+included because of a different release.)
+""",
+        )
+        parser.add_argument(
             "output_path",
             help="""
 Directory where to store the contents of the database.
@@ -70,6 +88,8 @@ If the folder does not exist, it will be created.""",
                 output_format=DumpOutputFormat.JSON
                 if options["json"]
                 else DumpOutputFormat.YAML,
+                skip_empty_quantities=options["skip_empty_quantities"],
+                skip_empty_entities=options["skip_empty_entities"],
                 only_tree=options["only_tree"],
                 output_folder=Path(options["output_path"]),
             ),

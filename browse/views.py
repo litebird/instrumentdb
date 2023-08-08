@@ -143,13 +143,9 @@ class FormatSpecificationDownloadView(View):
         data = file_data.read()
         resp = HttpResponse(data, content_type=cur_object.doc_mime_type)
 
-        if cur_object.doc_file_name is not None and cur_object.doc_file_name != "":
-            file_name = Path(cur_object.doc_file_name).name
-        else:
-            file_name = cur_object.document_ref + mimetypes.guess_extension(
-                cur_object.doc_mime_type
-            )
-        resp["Content-Disposition"] = 'filename="{0}"'.format(file_name)
+        resp["Content-Disposition"] = 'filename="{0}"'.format(
+            cur_object.get_sensible_file_name()
+        )
         return resp
 
 
@@ -385,6 +381,10 @@ class ReleaseViewSet(viewsets.ModelViewSet):
 
 def navigate_tree_of_entities(url_components: List[str]) -> Entity:
     cur_obj = get_object_or_404(Entity, name=url_components[0])
+
+    if len(url_components) == 1:
+        return cur_obj
+
     for comp in url_components[1:-1]:
         cur_obj = get_object_or_404(cur_obj.get_children(), name=comp)
 
@@ -393,15 +393,20 @@ def navigate_tree_of_entities(url_components: List[str]) -> Entity:
         last_name = last_name[:-1]
 
     try:
-        return Quantity.objects.get(name=last_name)
+        return cur_obj.quantities.get(name=last_name)
     except Quantity.DoesNotExist:
-        try:
-            return Entity.objects.get(name=last_name)
-        except Entity.DoesNotExist:
+        matching_entries = Entity.objects.filter(name=last_name, parent=cur_obj)
+        if len(matching_entries) == 0:
             raise Http404(
-                f"No matches for URL {url_components}, cannot decide "
-                f"whether {last_name} is an entity or a quantity"
+                f"No entity found with name {last_name} in URL {'/'.join(url_components)}"
             )
+        if len(matching_entries) > 1:
+            raise ValueError(
+                f"More than one entry matched the name {last_name} "
+                f"in the children of {cur_obj.name}"
+            )
+
+        return matching_entries[0]
 
 
 def entity_reference_view(request, reference: str):

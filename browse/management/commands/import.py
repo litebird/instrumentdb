@@ -110,7 +110,7 @@ class Command(BaseCommand):
                 )
                 continue
 
-            doc_file_name = spec_dict.get("doc_file")
+            doc_file_name = spec_dict.get("file_path")
 
             if doc_file_name:
                 file_path = self.attachment_source_path / doc_file_name
@@ -244,7 +244,7 @@ class Command(BaseCommand):
                 continue
 
             metadata = json.dumps(data_file_dict.get("metadata", {}))
-            filename = data_file_dict.get("file_data")
+            filename = data_file_dict.get("file_name")
             plot_filename = data_file_dict.get("plot_file")
             dependencies = data_file_dict.get("dependencies", [])
 
@@ -344,6 +344,8 @@ class Command(BaseCommand):
 
             comment = rel_dict.get("comment")
             data_files = rel_dict.get("data_files")
+            release_document = rel_dict.get("release_document")
+            release_document_mime_type = rel_dict.get("release_document_mime_type")
 
             try:
                 rel_date = parse_datetime(rel_dict.get("release_date"))
@@ -356,6 +358,14 @@ class Command(BaseCommand):
             if not rel_date:
                 raise CommandError(f"no date specified for release {tag}")
 
+            if release_document:
+                file_path = self.attachment_source_path / release_document
+                release_fp = open(file_path, "rb")
+                release_document_file = File(release_fp, "rb")
+            else:
+                release_fp = None
+                release_document_file = None
+
             self.stdout.write(
                 f'Release tag "{tag}" ({rel_date}), {len(data_files)} objects'
             )
@@ -363,13 +373,21 @@ class Command(BaseCommand):
             if not self.dry_run:
                 (cur_release, _) = Release.objects.update_or_create(
                     tag=tag,
-                    defaults={"rel_date": rel_date, "comment": comment},
+                    defaults={
+                        "rel_date": rel_date,
+                        "comment": comment,
+                        "release_document": release_document_file,
+                        "release_document_mime_type": release_document_mime_type,
+                    },
                 )
 
                 for cur_uuid in data_files:
                     cur_release.data_files.add(DataFile.objects.get(uuid=cur_uuid))
 
                 cur_release.save()
+
+                if release_fp:
+                    release_fp.close()
 
     def add_arguments(self, parser):
         parser.add_argument(

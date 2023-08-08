@@ -178,6 +178,23 @@ class EntityTests(APITestCase):
         entity_json = response.json()
         self.assertEqual(UUID(entity_json["uuid"]), Entity.objects.get().uuid)
 
+    def test_nested_entities(self):
+        parent_entity = create_entity_spec(self.client, "test_entity").json()
+        child_entity = create_entity_spec(
+            self.client, "child1", parent=parent_entity["url"]
+        ).json()
+        sub_child_entity = create_entity_spec(
+            self.client, "child2", parent=child_entity["url"]
+        ).json()
+
+        response = self.client.get("/tree/test_entity/child1/child2/")
+        # HTTP 302 marks a redirection
+        self.assertEqual(response.status_code, 302)
+
+        # Get the true entity
+        response = self.client.get(response.url)
+        self.assertEqual(response.json()["url"], sub_child_entity["url"])
+
     def test_look_for_nonexistent_quantity(self):
         response = self.client.get("/tree/this_entity_does_not_exist")
         self.assertEqual(response.status_code, status.HTTP_301_MOVED_PERMANENTLY)

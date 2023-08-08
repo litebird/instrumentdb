@@ -25,7 +25,7 @@ in the database:
   "quantity" (see above).
 
 """
-
+import mimetypes
 from collections import namedtuple, OrderedDict
 from dataclasses import dataclass
 from enum import Enum
@@ -267,6 +267,13 @@ class FormatSpecification(models.Model):
         else:
             return f"{self.document_ref}"
 
+    def get_sensible_file_name(self):
+        "Return a suitable file name for the specification document"
+        if self.doc_file_name is not None and self.doc_file_name != "":
+            return self.doc_file_name
+        else:
+            return self.document_ref + mimetypes.guess_extension(self.doc_mime_type)
+
 
 class Quantity(models.Model):
     uuid = models.UUIDField(
@@ -304,7 +311,7 @@ def data_file_directory_path(instance, filename):
     return Path("data_files") / f"{instance.uuid}_{instance.name}"
 
 
-def plot_file_directory_path(instance, filename):
+def full_plot_file_path(instance, filename):
     try:
         ext = "." + MIME_TO_IMAGE_EXTENSION[instance.plot_mime_type.split(";")[0]]
     except KeyError:
@@ -372,7 +379,7 @@ class DataFile(models.Model):
     plot_file = models.FileField(
         "image file",
         blank=True,
-        upload_to=plot_file_directory_path,
+        upload_to=full_plot_file_path,
         help_text="Plot of the data in the file (optional)",
     )
     plot_mime_type = models.CharField(
@@ -444,6 +451,8 @@ class Release(models.Model):
 
     release_document_mime_type = models.CharField(
         "MIME type of the specification document",
+        blank=True,
+        null=True,
         max_length=256,
         choices=[(x.mime_type, x.description) for x in DOCUMENT_FILE_TYPES],
         default=DOCUMENT_FILE_TYPES[0].mime_type,
@@ -472,6 +481,8 @@ class Release(models.Model):
                     no_attachments=True,
                     only_tree=False,
                     exist_ok=True,
+                    skip_empty_quantities=False,
+                    skip_empty_entities=False,
                     output_format=DumpOutputFormat.JSON,
                     output_folder=temp_path,
                 ),
@@ -500,6 +511,8 @@ class ReleaseDumpConfiguration:
     no_attachments: bool
     only_tree: bool
     exist_ok: bool
+    skip_empty_entities: bool
+    skip_empty_quantities: bool
     output_format: DumpOutputFormat
     output_folder: Path
 
@@ -579,9 +592,23 @@ def save_attachment(configuration: ReleaseDumpConfiguration, relative_path, file
             outf.write(data)
 
 
-def dump_entity_tree(configuration: ReleaseDumpConfiguration, entities):
+def dump_entity_tree(configuration: ReleaseDumpConfiguration, entities, data_files):
     result = []
     for cur_entity in entities:
+        if configuration.skip_empty_entities:
+            quantities = Quantity.objects.filter(parent_entity=cur_entity)
+            num_of_data_files = 0
+            for cur_quantity in quantities:
+                num_of_data_files += len(
+                    cur_quantity.data_files.filter(uuid__in=data_files.all())
+                )
+
+            if not cur_entity.get_children() and num_of_data_files == 0:
+                logging.info(
+                    f"Skipping {cur_entity.name} as it has no children nor quantities"
+                )
+                continue
+
         # We use a OrderedDict here because otherwise "children" would
         # be the first key in the JSON file, and this would make the
         # file harder to read
@@ -593,7 +620,9 @@ def dump_entity_tree(configuration: ReleaseDumpConfiguration, entities):
         children = cur_entity.get_children()
         if children:
             # Descend the tree recursively
-            new_element["children"] = dump_entity_tree(configuration, children)
+            new_element["children"] = dump_entity_tree(
+                configuration, children, data_files
+            )
 
         result.append(new_element)
 
@@ -608,6 +637,7 @@ def dump_specifications(configuration: ReleaseDumpConfiguration, specs):
                 ("uuid", Quoted(cur_spec.uuid)),
                 ("document_ref", Quoted(cur_spec.document_ref)),
                 ("title", Quoted(cur_spec.title)),
+                ("doc_file_name", Quoted(cur_spec.doc_file_name)),
                 ("file_mime_type", Quoted(cur_spec.file_mime_type)),
                 ("doc_mime_type", Quoted(cur_spec.doc_mime_type)),
             ]
@@ -617,7 +647,7 @@ def dump_specifications(configuration: ReleaseDumpConfiguration, specs):
             dest_path = (
                 Path("format_spec") / f"{cur_spec.uuid}_{cur_spec.doc_file_name}"
             )
-            cur_entry["file_name"] = Quoted(dest_path)
+            cur_entry["file_path"] = Quoted(dest_path)
 
             save_attachment(configuration, dest_path, cur_spec.doc_file)
 
@@ -626,9 +656,18 @@ def dump_specifications(configuration: ReleaseDumpConfiguration, specs):
     return result
 
 
-def dump_quantities(configuration: ReleaseDumpConfiguration, quantities):
+def dump_quantities(configuration: ReleaseDumpConfiguration, quantities, data_files):
     result = []
     for cur_quantity in quantities:
+        if configuration.skip_empty_quantities and (
+            len(cur_quantity.data_files.filter(uuid__in=data_files.all())) < 1
+        ):
+            # This quantity has no data files
+            logging.info(
+                "Skipping quantity '%s' as it has no data files", cur_quantity.name
+            )
+            continue
+
         cur_entry = OrderedDict(
             [
                 ("uuid", Quoted(cur_quantity.uuid)),
@@ -666,9 +705,7 @@ def dump_data_files(configuration: ReleaseDumpConfiguration, data_files):
             save_attachment(configuration, dest_path, cur_data_file.file_data)
 
         if cur_data_file.plot_file and (not configuration.no_attachments):
-            dest_path = (
-                Path("plot_files") / plot_file_directory_path(cur_data_file, "").name
-            )
+            dest_path = Path("plot_files") / full_plot_file_path(cur_data_file, "").name
             cur_entry["plot_file"] = Quoted(dest_path)
             cur_entry["plot_mime_type"] = Quoted(cur_data_file.plot_mime_type)
             save_attachment(configuration, dest_path, cur_data_file.file_data)
@@ -697,6 +734,24 @@ def dump_releases(configuration: ReleaseDumpConfiguration, releases):
                 ),
             ]
         )
+
+        if cur_release.release_document_mime_type is not None:
+            cur_entry["release_document_mime_type"] = Quoted(
+                cur_release.release_document_mime_type
+            )
+
+        if cur_release.release_document and (not configuration.no_attachments):
+            if cur_release.release_document_mime_type is not None:
+                ext = mimetypes.guess_extension(cur_release.release_document_mime_type)
+            else:
+                ext = ""
+
+            dest_path = Path("release_documents") / "{tag}{ext}".format(
+                tag=cur_release.tag,
+                ext=ext,
+            )
+            save_attachment(configuration, dest_path, cur_release.release_document)
+            cur_entry["release_document"] = Quoted(dest_path)
 
         result.append(cur_entry)
 
@@ -738,7 +793,12 @@ def save_schema(
                     ]
                 ),
             ),
-            ("entities", dump_entity_tree(configuration, Entity.objects.root_nodes())),
+            (
+                "entities",
+                dump_entity_tree(
+                    configuration, Entity.objects.root_nodes(), data_files=data_files
+                ),
+            ),
             (
                 "format_specifications",
                 {}
@@ -747,7 +807,14 @@ def save_schema(
                     configuration, FormatSpecification.objects.all()
                 ),
             ),
-            ("quantities", dump_quantities(configuration, Quantity.objects.all())),
+            (
+                "quantities",
+                dump_quantities(
+                    configuration=configuration,
+                    quantities=Quantity.objects.all(),
+                    data_files=data_files,
+                ),
+            ),
             (
                 "data_files",
                 {}
