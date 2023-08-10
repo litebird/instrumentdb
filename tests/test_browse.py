@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from browse.models import Entity, Quantity, DataFile, FormatSpecification
 
@@ -73,6 +73,13 @@ class RelationshipsTestCase(TestCase):
         assert (
             grasp_beam.format_spec.document_ref != synth_beam.format_spec.document_ref
         )
+
+    def test_bad_names(self):
+        with self.assertRaises(ValidationError):
+            Entity.name.field.run_validators(value="wrong name with spaces")
+
+        with self.assertRaises(ValidationError):
+            Quantity.name.field.run_validators(value="wrong name with spaces")
 
     def test_data_files(self):
         grasp_beam = Quantity.objects.get(name="rtc_grasp_beam")

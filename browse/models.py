@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from enum import Enum
 import logging
 from pathlib import Path
+import re
 from tempfile import TemporaryDirectory
 
 import uuid
@@ -46,6 +47,10 @@ from django.utils import timezone
 from mptt.models import MPTTModel, TreeForeignKey
 
 from instrumentdb import __version__
+
+# This is used to validate entity/quantity names, which are used in URLs
+QUANTITY_NAME_REGEXP = re.compile(r"[-a-zA-Z0-9@:%._\+~#=]{1,256}")
+
 
 FileType = namedtuple(
     "ImageFileType",
@@ -179,12 +184,19 @@ def validate_json(value):
         )
 
 
+def validate_name(value: str) -> None:
+    if not QUANTITY_NAME_REGEXP.fullmatch(value):
+        raise ValidationError(message=f'invalid characters in quantity name "{value}"')
+
+
 class Entity(MPTTModel):
     uuid = models.UUIDField(
         primary_key=True, unique=True, default=uuid.uuid4, editable=False
     )
     name = models.CharField(
-        max_length=256, help_text="Descriptive name for this entity"
+        max_length=256,
+        help_text="Descriptive name for this entity",
+        validators=[validate_name],
     )
     parent = TreeForeignKey(
         "self", on_delete=models.CASCADE, null=True, blank=True, related_name="children"
@@ -280,7 +292,9 @@ class Quantity(models.Model):
         primary_key=True, unique=True, default=uuid.uuid4, editable=False
     )
     name = models.CharField(
-        max_length=256, help_text="Descriptive name for this quantity"
+        max_length=256,
+        help_text="Descriptive name for this quantity",
+        validators=[validate_name],
     )
     format_spec = models.ForeignKey(
         FormatSpecification,
