@@ -1,5 +1,7 @@
 # HEAD
 
+-   Properly delete files that are no longer referenced in the database [#109](https://github.com/ziotom78/instrumentdb/pull/109)
+
 -   Allow empty metadata in data files when using the RESTful API [#107](https://github.com/ziotom78/instrumentdb/pull/107)
 
 -   Implement Swagger and Redoc web pages documenting the RESTful API [#106](https://github.com/ziotom78/instrumentdb/pull/106)
