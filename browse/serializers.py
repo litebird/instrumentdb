@@ -113,7 +113,6 @@ def serializer_validate_json(value) -> None:
     try:
         validate_json(value)
     except ValidationError as err:
-        print(f"validate_json failed with {value=}")
         raise serializers.ValidationError(detail=err.message, code=err.code)
 
 
