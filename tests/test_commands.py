@@ -445,3 +445,32 @@ class TextExport(TestCase):
                 cur_rel.release_document.open()
                 self.assertEqual(cur_rel.release_document.read(), cur_release_document)
                 self.assertEqual(cur_rel.release_document_mime_type, "text/plain")
+
+    def test_delete_all(self):
+        call_command("delete-all", "--force")
+
+        self.assertEqual(len(FormatSpecification.objects.all()), 0)
+        self.assertEqual(len(DataFile.objects.all()), 0)
+        self.assertEqual(len(Quantity.objects.all()), 0)
+        self.assertEqual(len(Entity.objects.all()), 0)
+        self.assertEqual(len(Release.objects.all()), 0)
+
+    def test_delete_all_only_data_files(self):
+        call_command("delete-all", "--force", "--only-data-files")
+
+        self.assertEqual(len(DataFile.objects.all()), 0)
+
+        self.assertTrue(len(FormatSpecification.objects.all()) > 0)
+        self.assertTrue(len(Quantity.objects.all()) > 0)
+        self.assertTrue(len(Entity.objects.all()) > 0)
+        self.assertTrue(len(Release.objects.all()) > 0)
+
+    def test_delete_all_skip_format_specs(self):
+        call_command("delete-all", "--force", "--skip-format-specifications")
+
+        self.assertTrue(len(FormatSpecification.objects.all()) > 0)
+
+        self.assertEqual(len(DataFile.objects.all()), 0)
+        self.assertEqual(len(Quantity.objects.all()), 0)
+        self.assertEqual(len(Entity.objects.all()), 0)
+        self.assertEqual(len(Release.objects.all()), 0)

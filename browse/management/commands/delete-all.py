@@ -4,7 +4,7 @@ import sys
 
 from django.contrib.auth.models import User, Group
 from django.core.management.base import BaseCommand
-from browse.models import DataFile, Quantity, Entity, Release
+from browse.models import DataFile, Quantity, Entity, Release, FormatSpecification
 
 
 def query_yes_no(question, default="yes"):
@@ -47,10 +47,31 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            "--force",
+            action="store_true",
+            default=False,
+            help="Do not ask for confirmation before deleting stuff (USE WITH CARE)",
+        )
+        parser.add_argument(
             "--delete-authentication",
             action="store_true",
             default=False,
             help="Delete all the authentication data too",
+        )
+
+        parser.add_argument(
+            "--skip-format-specifications",
+            action="store_true",
+            default=False,
+            help="Do not delete the format specifications",
+        )
+
+        parser.add_argument(
+            "--only-data-files",
+            action="store_true",
+            default=False,
+            help="""Only delete all the data files, but leave
+            entities, quantities, and format specifications intact""",
         )
 
     def handle(self, *args, **options):
@@ -66,7 +87,9 @@ class Command(BaseCommand):
             )
             delete_auth = False
 
-        if not query_yes_no(question=question, default="no"):
+        if (not options["force"]) and (
+            not query_yes_no(question=question, default="no")
+        ):
             return
 
         import time
@@ -74,9 +97,14 @@ class Command(BaseCommand):
         start_time = time.monotonic()
 
         DataFile.objects.filter().delete()
-        Quantity.objects.filter().delete()
-        Entity.objects.filter().delete()
-        Release.objects.filter().delete()
+
+        if not options["only_data_files"]:
+            Quantity.objects.filter().delete()
+            Entity.objects.filter().delete()
+            Release.objects.filter().delete()
+
+            if not options["skip_format_specifications"]:
+                FormatSpecification.objects.filter().delete()
 
         if delete_auth:
             User.objects.filter().delete()
