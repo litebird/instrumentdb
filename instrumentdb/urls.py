@@ -17,6 +17,9 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 
 from rest_framework import routers
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
 from browse.forms import change_password
 from browse.views import (
@@ -56,6 +59,18 @@ router.register(r"entities", EntityViewSet)
 router.register(r"quantities", QuantityViewSet)
 router.register(r"data_files", DataFileViewSet)
 router.register(r"releases", ReleaseViewSet)
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="InstrumentDB API",
+        default_version="v1",
+        description="A RESTful API to InstrumentDB",
+        contact=openapi.Contact(email="maurizio.tomasi@unimi.it"),
+        license=openapi.License(name="GPL3 License"),
+    ),
+    public=True,
+    permission_classes=[permissions.AllowAny],
+)
 
 urlpatterns = [
     path("", ReleaseListView.as_view(), name="release-list-view"),
@@ -109,4 +124,14 @@ urlpatterns = [
     re_path(r"^tree/(?P<reference>[\w./-]+)/$", entity_reference_view),
     path("api/login", login_request),
     path("accounts/", include("django.contrib.auth.urls")),
+    # OpenAPI available as Swagger and ReDoc pages
+    path(
+        "swagger<format>/", schema_view.without_ui(cache_timeout=0), name="schema-json"
+    ),
+    path(
+        "swagger/",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-swagger-ui",
+    ),
+    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
 ]

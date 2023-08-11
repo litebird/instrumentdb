@@ -105,6 +105,7 @@ INSTALLED_APPS = [
     "browse",
     "rest_framework.authtoken",
     "sslserver",
+    "drf_yasg",
 ]
 
 MIDDLEWARE = [
