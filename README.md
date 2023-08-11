@@ -81,7 +81,6 @@ before installing InstrumentDB.
     ```
     
 2.  Install all the dependencies using `poetry`:
-
     ```sh
     poetry install
     ```
