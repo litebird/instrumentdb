@@ -10,7 +10,7 @@
 
 -   Add the switches `--skip-empty-quantities` and `--skip-empty-entities` to the `export` command [#100](https://github.com/ziotom78/instrumentdb/pull/100)
 
--   Add a new API to access entities and quantities through their path [#98](https://github.com/ziotom78/instrumentdb/pull/98)
+-   Add a new API to access entities and quantities through their path [#98](https://github.com/ziotom78/instrumentdb/pull/98), [#108](https://github.com/ziotom78/instrumentdb/pull/108)
 
 -   Make the download of specification documents easier [#97](https://github.com/ziotom78/instrumentdb/pull/97)
 
