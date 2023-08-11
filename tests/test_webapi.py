@@ -178,6 +178,37 @@ class EntityTests(APITestCase):
         entity_json = response.json()
         self.assertEqual(UUID(entity_json["uuid"]), Entity.objects.get().uuid)
 
+    def test_entities_with_same_name(self):
+        response = create_entity_spec(self.client, "entity")
+        response = create_entity_spec(
+            self.client, "entity", parent=response.data["url"]
+        )
+        response = create_entity_spec(
+            self.client, "entity", parent=response.data["url"]
+        )
+
+        # This is the URL of the entity `entity/entity/entity`
+        url = response.data["url"]
+
+        response = self.client.get("/tree/entity/entity/entity/")
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+
+        # Follow the redirect
+        response = self.client.get(response.url)
+        self.assertEqual(response.data["url"], url)
+
+    def test_entities_with_name_clashes(self):
+        response = create_entity_spec(self.client, "entity")
+        parent_url = response.data["url"]
+
+        # Two children with the same name
+        response = create_entity_spec(self.client, "subentity", parent=parent_url)
+        response = create_entity_spec(self.client, "subentity", parent=parent_url)
+
+        # Make an ambiguous call
+        response = self.client.get("/tree/entity/subentity/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_nested_entities(self):
         parent_entity = create_entity_spec(self.client, "test_entity").json()
         child_entity = create_entity_spec(

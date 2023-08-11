@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-
+import json
 from datetime import datetime
 from datetime import timezone
 import mimetypes
@@ -17,10 +17,9 @@ from django.views.generic.list import ListView
 from django.contrib.auth.models import User, Group
 from django.shortcuts import render, redirect, get_object_or_404
 
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.mixins import UpdateModelMixin
 from rest_framework.pagination import PageNumberPagination
 
 import instrumentdb
@@ -380,7 +379,17 @@ class ReleaseViewSet(viewsets.ModelViewSet):
 
 
 def navigate_tree_of_entities(url_components: List[str]) -> Entity:
-    cur_obj = get_object_or_404(Entity, name=url_components[0])
+    matching_entries = Entity.objects.filter(name=url_components[0])
+    # We are looking for a root node
+    depth0_entry = None
+    for cur_entry in matching_entries:
+        if cur_entry.is_root_node():
+            if depth0_entry is None:
+                depth0_entry = cur_entry
+            else:
+                raise Http404(f"more than one root node with name {url_components[0]}")
+
+    cur_obj = depth0_entry
 
     if len(url_components) == 1:
         return cur_obj
@@ -409,6 +418,10 @@ def navigate_tree_of_entities(url_components: List[str]) -> Entity:
         return matching_entries[0]
 
 
+def api_response_error(message: str, status: int) -> HttpResponse:
+    return HttpResponse(json.dumps({"error": message}).encode("utf-8"), status=status)
+
+
 def entity_reference_view(request, reference: str):
     """
     Access an entity through its path
@@ -416,7 +429,12 @@ def entity_reference_view(request, reference: str):
     If `reference` is `/satellite/LFT`, the result of this
     function will be a redirect to the
     """
-    cur_obj = navigate_tree_of_entities(url_components=reference.split("/"))
+    try:
+        cur_obj = navigate_tree_of_entities(url_components=reference.split("/"))
+    except ValueError as err:
+        return api_response_error(message=str(err), status=status.HTTP_400_BAD_REQUEST)
+    except Http404 as err:
+        return api_response_error(message=str(err), status=status.HTTP_400_BAD_REQUEST)
 
     if isinstance(cur_obj, Quantity):
         return redirect("quantity-detail", cur_obj.uuid)
@@ -442,11 +460,19 @@ def release_view(request, rel_name: str, reference: str, browse_view=False):
     #      sequence of entities         quantity
 
     url_components = reference.split("/")
-    cur_obj = navigate_tree_of_entities(url_components=url_components[:-1])
 
-    quantity_name = url_components[-1]
-    quantity = get_object_or_404(cur_obj.quantities, name=quantity_name)
-    data_file = get_object_or_404(quantity.data_files, release_tags__tag=release.tag)
+    try:
+        cur_obj = navigate_tree_of_entities(url_components=url_components[:-1])
+
+        quantity_name = url_components[-1]
+        quantity = get_object_or_404(cur_obj.quantities, name=quantity_name)
+        data_file = get_object_or_404(
+            quantity.data_files, release_tags__tag=release.tag
+        )
+    except ValueError as err:
+        return api_response_error(message=str(err), status=status.HTTP_400_BAD_REQUEST)
+    except Http404 as err:
+        return api_response_error(message=str(err), status=status.HTTP_400_BAD_REQUEST)
 
     if browse_view:
         return redirect("data-file-view", data_file.uuid)
