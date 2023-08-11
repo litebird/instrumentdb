@@ -1,5 +1,7 @@
 # HEAD
 
+-   Allow empty metadata in data files when using the RESTful API [#107](https://github.com/ziotom78/instrumentdb/pull/107)
+
 -   Implement Swagger and Redoc web pages documenting the RESTful API [#106](https://github.com/ziotom78/instrumentdb/pull/106)
 
 -   Validate entity/quantity names in forms and RESTful API [#102](https://github.com/ziotom78/instrumentdb/pull/102), [#105](https://github.com/ziotom78/instrumentdb/pull/105)
