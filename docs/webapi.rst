@@ -2,6 +2,11 @@ Web API
 =======
 
 This section provides the documentation to the web API implemented 
+in InstrumentDB. You can get a view of the RESTful API calls using
+either the `Swagger <https://swagger.io/>`_ and
+`Redoc <https://redocly.com/>`_ pages, available at the addresses
+http://server/swagger/ and http://server/redoc/.
+
 
 Format specifications
 ---------------------
