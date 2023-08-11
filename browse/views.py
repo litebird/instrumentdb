@@ -379,7 +379,13 @@ class ReleaseViewSet(viewsets.ModelViewSet):
 
 
 def navigate_tree_of_entities(url_components: List[str]) -> Entity:
+    # Filter out empty components. (This can be the case if e.g. the
+    # caller mistakenly writes two `/` characters, like in
+    # `/tree/satellite//telescope/cad`.)
+    url_components = [x for x in url_components if x != ""]
+
     matching_entries = Entity.objects.filter(name=url_components[0])
+
     # We are looking for a root node
     depth0_entry = None
     for cur_entry in matching_entries:
@@ -400,6 +406,11 @@ def navigate_tree_of_entities(url_components: List[str]) -> Entity:
     last_name = url_components[-1]
     if last_name.endswith("/"):
         last_name = last_name[:-1]
+
+    if cur_obj is None:
+        raise ValueError(
+            "no matching item for path '{}'".format("/".join(url_components))
+        )
 
     try:
         return cur_obj.quantities.get(name=last_name)
@@ -438,8 +449,13 @@ def entity_reference_view(request, reference: str):
 
     if isinstance(cur_obj, Quantity):
         return redirect("quantity-detail", cur_obj.uuid)
-    else:
+    elif isinstance(cur_obj, Entity):
         return redirect("entity-detail", cur_obj.uuid)
+    else:
+        return api_response_error(
+            message=f"invalid reference '{reference}'",
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 def release_view(request, rel_name: str, reference: str, browse_view=False):
