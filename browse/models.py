@@ -175,6 +175,9 @@ MIME_TO_IMAGE_EXTENSION = {x.mime_type: x.file_extension for x in IMAGE_FILE_TYP
 def validate_json(value):
     """Check that `value` is a valid JSON record"""
 
+    if value is None or value == "":
+        return
+
     try:
         json.loads(value)
     except json.JSONDecodeError as err:
@@ -364,6 +367,7 @@ class DataFile(models.Model):
         "JSON-formatted metadata",
         max_length=32768,
         blank=True,
+        null=True,
         help_text="JSON record containing metadata for the file",
         validators=[validate_json],
     )

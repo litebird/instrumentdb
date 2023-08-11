@@ -144,7 +144,7 @@ class DataFileSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="datafile-detail", read_only=True
     )
-    metadata = JSONField(validators=[serializer_validate_json])
+    metadata = JSONField(required=False, validators=[serializer_validate_json])
 
     class Meta:
         model = DataFile
