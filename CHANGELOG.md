@@ -20,7 +20,7 @@
 
 -   Validate the `metadata` field of data files [#92](https://github.com/ziotom78/instrumentdb/pull/92)
 
--   Implement the `delete-all` command [#91](https://github.com/ziotom78/instrumentdb/pull/91)
+-   Implement the `delete-all` command [#91](https://github.com/ziotom78/instrumentdb/pull/91), [#103](https://github.com/ziotom78/instrumentdb/pull/103)
 
 -   Implement the `delete-data-files` command [#90](https://github.com/ziotom78/instrumentdb/pull/90)
 
