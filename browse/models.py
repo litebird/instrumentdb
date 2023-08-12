@@ -1,16 +1,16 @@
 # -*- encoding: utf-8 -*-
 
-"""Implementation of the fundamental concepts of an IMO as database
-tables.
+"""Implementation of the fundamental concepts of an Instrument
+ Model as database tables.
 
 This file implements the following classes, which are descendeants of
 Django's `models.Model` class and are therefore used to set up tables
 in the database:
 
 - `Entity`: a feature of the instrument that is modelled in the
-  IMO. Entities can form tree-like structures. Examples: a telescope,
-  a cryostat, a focal plane, a beam, etc., where focal planes can be
-  parents of several beams.
+  database. Entities can form tree-like structures. Examples: a
+  telescope, a cryostat, a focal plane, a beam, etc., where focal
+  planes can be parents of several beams.
 
 - `Quantity`: numerical information related to an entity, which must
   conform to some format specification (see below). Examples: a beam
