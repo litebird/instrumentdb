@@ -341,6 +341,18 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
+name = "django-cleanup"
+version = "8.0.0"
+description = "Deletes old files."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "django-cleanup-8.0.0.tar.gz", hash = "sha256:c739a05544e1e48dc848871c870dbf1595f8533d24523bc67360e43562edaf0d"},
+    {file = "django_cleanup-8.0.0-py2.py3-none-any.whl", hash = "sha256:8cd8872d67fe1501b19a843d006cdb5673cfbb74ac3d6d8f2c60e8e7723a7f5b"},
+]
+
+[[package]]
 name = "django-filter"
 version = "2.4.0"
 description = "Django-filter is a reusable Django application for allowing users to filter querysets dynamically."
@@ -1281,4 +1293,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "02803c0ad743d147cda4021b03bd0740381e6f5634a92dcee611a7fdd66c99f0"
+content-hash = "7d2e2c9ce9c6ce3b38e49cd00bcfbfeeb670b5272a159186d5d6d3e8cd58f4d6"

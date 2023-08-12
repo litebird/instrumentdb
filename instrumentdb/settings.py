@@ -106,6 +106,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "sslserver",
     "drf_yasg",
+    "django_cleanup.apps.CleanupConfig",  # This must be the last one!
 ]
 
 MIDDLEWARE = [

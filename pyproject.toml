@@ -23,6 +23,7 @@ pytz = "^2022.1"
 coverage = "^7.2.7"
 flake8 = "^6.0.0"
 black = "^23.7.0"
+django-cleanup = "^8.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.4"
