@@ -305,7 +305,9 @@ class DataFileTests(APITestCase):
 
         data_file_obj = DataFile.objects.get()
         self.assertEqual(data_file_obj.name, "test_datafile")
-        self.assertEqual(data_file_obj.full_path, "test_entity/test_datafile")
+        self.assertEqual(
+            data_file_obj.full_path, "test_entity/test_quantity/test_datafile"
+        )
 
         # Now get the object from the database and check that
         # everything looks ok

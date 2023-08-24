@@ -323,6 +323,12 @@ class Quantity(models.Model):
             "uuid",
         )
 
+    @property
+    def full_path(self):
+        entity = self.parent_entity
+        ancestors = entity.get_ancestors(include_self=True)
+        return "/".join([x.name for x in ancestors]) + "/" + self.name
+
 
 def data_file_directory_path(instance, filename):
     return Path("data_files") / f"{instance.uuid}_{instance.name}"
@@ -439,7 +445,13 @@ class DataFile(models.Model):
     def full_path(self):
         entity = self.quantity.parent_entity
         ancestors = entity.get_ancestors(include_self=True)
-        return "/".join([x.name for x in ancestors]) + "/" + self.name
+        return (
+            "/".join([x.name for x in ancestors])
+            + "/"
+            + self.quantity.name
+            + "/"
+            + self.name
+        )
 
 
 class Release(models.Model):
@@ -708,11 +720,13 @@ def dump_data_files(configuration: ReleaseDumpConfiguration, data_files):
                 ("uuid", Quoted(cur_data_file.uuid)),
                 ("name", Quoted(cur_data_file.name)),
                 ("upload_date", Quoted(cur_data_file.upload_date)),
-                ("metadata", json.loads(cur_data_file.metadata)),
                 ("quantity", Quoted(cur_data_file.quantity.uuid)),
                 ("spec_version", Quoted(cur_data_file.spec_version)),
             ]
         )
+
+        if cur_data_file.metadata is not None and cur_data_file.metadata != "":
+            cur_entry["metadata"] = json.loads(cur_data_file.metadata)
 
         if cur_data_file.file_data and (not configuration.no_attachments):
             dest_path = (
@@ -726,7 +740,7 @@ def dump_data_files(configuration: ReleaseDumpConfiguration, data_files):
             dest_path = Path("plot_files") / full_plot_file_path(cur_data_file, "").name
             cur_entry["plot_file"] = Quoted(dest_path)
             cur_entry["plot_mime_type"] = Quoted(cur_data_file.plot_mime_type)
-            save_attachment(configuration, dest_path, cur_data_file.file_data)
+            save_attachment(configuration, dest_path, cur_data_file.plot_file)
 
         if cur_data_file.dependencies:
             cur_entry["dependencies"] = [
@@ -784,7 +798,7 @@ def save_schema(
     try:
         this_repo = git.Repo(search_parent_directories=True)
         git_sha = this_repo.head.object.hexsha
-    except git.InvalidGitRepositoryError:
+    except (ValueError, git.InvalidGitRepositoryError):
         git_sha = "unknown"
 
     if release_tag:
