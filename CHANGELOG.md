@@ -1,5 +1,7 @@
 # HEAD
 
+-   Remove limit in number of fields within a POST request [#114](https://github.com/ziotom78/instrumentdb/pull/114)
+
 -   Fix the path to data files that is shown in the “Details” page [#113](https://github.com/ziotom78/instrumentdb/pull/113)
 
 -   Fix an error in `manage.py export` when plot files are present [#112](https://github.com/ziotom78/instrumentdb/pull/112)

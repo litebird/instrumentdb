@@ -197,6 +197,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = env("STATIC_PATH", default=os.path.join(BASE_DIR, "static"))
+
+# Login
+
 LOGIN_REDIRECT_URL = "/accounts/login/"
 LOGOUT_REDIRECT_URL = "/"
 ADMIN_MEDIA_PREFIX = "/static/admin/"
@@ -205,3 +208,9 @@ TOKEN_EXPIRED_AFTER_MINUTES = 15
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 3600  # (seconds) #86400 #1day
+
+# Other settings
+
+# See
+# https://docs.djangoproject.com/en/4.2/ref/settings/#data-upload-max-number-fields
+DATA_UPLOAD_MAX_NUMBER_FIELDS = None
