@@ -29,6 +29,7 @@ env = Env(
     ALLOWED_HOSTS=dict(cast=list, subcast=str),
     STORAGE_PATH=dict(cast=str, default="var"),
     DATABASE_URL=dict(cast=str, default=str(Path("var") / "instrumentdb.sqlite3")),
+    CSRF_TRUSTED_ORIGINS=dict(cast=list, subcast=str),
 )
 env.read_envfile()
 
@@ -39,6 +40,7 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 MEDIA_ROOT = Path(env("STORAGE_PATH"))
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
 if env.bool("LOGGING"):
     log_file_path = env("LOG_FILE_PATH", default="")
