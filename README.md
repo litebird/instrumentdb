@@ -53,6 +53,9 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://github.com/litebird/instrumentdb)
 
+InstrumentDB is a customizable Django application with a database schema that can be used to store information about scientific instruments. An example of the website is available at <https://insdbdemo.fisica.unimi.it>: use `demo` as username and `planckdbdemo` as password.
+
+The database provides a RESTful interface; a high-level Python wrapper is available in the repository <https://github.com/ziotom78/libinsdb>.
 
 ### Built With
 
