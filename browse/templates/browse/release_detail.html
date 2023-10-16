@@ -34,9 +34,6 @@
       <th>&alpha; [deg]</th>
       <th>Precession period [min]</th>
       <th>Spin rate [RPM]</th>
-      <th>Duration [yr]</th>
-      <th>Duty cycle</th>
-      <th>CR loss</th>
     </tr>
   </thead>
   <tbody>
@@ -45,9 +42,29 @@
       <td>{{ spin_sun_angle_deg }}</td>
       <td>{{ precession_period_min }}</td>
       <td>{{ spin_rate_rpm }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Observation Time</h2>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Data file</th>
+      <th>Duration [yr]</th>
+      <th>Duty cycle</th>
+      <th>CR loss</th>
+      <th>Margin</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="{% url 'data-file-view' observation_time_uuid %}">Link</a></td>
       <td>{{ mission_duration_year }}</td>
       <td>{{ observation_duty_cycle }}</td>
       <td>{{ cosmic_ray_loss }}</td>
+      <td>{{ margin }}</td>
     </tr>
   </tbody>
 </table>
