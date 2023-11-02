@@ -22,6 +22,9 @@ The way it is supposed to be used is the following:
 
 5. Deploy your fork using a webserver!
 """
+from typing import Any
+
+import json
 
 
 # This is used to prepare the context for the template
@@ -48,6 +51,20 @@ def create_datafile_view_context(context):
     pass
 
 
+def extract_info_from_metadata(
+    quantities,
+    release_tag: str,
+    quantity_name: str,
+    uuid_field_name: str,
+    result: dict[Any, Any],
+):
+    quantity = quantities.get(name=quantity_name)
+    scanning_obj = quantity.data_files.get(release_tags__tag=release_tag)
+    result[uuid_field_name] = scanning_obj.uuid
+
+    return json.loads(scanning_obj.metadata)
+
+
 # This is used to prepare the context for the template
 # borwse/templates/browse/release_detail.html
 # The field context["object"] is the instance the Release class
@@ -56,44 +73,67 @@ def create_release_view_context(context):
 
     from django.core.exceptions import ObjectDoesNotExist
     from browse.models import Entity
-    import json
+
+    release_tag = context["object"].tag
 
     # We must check if we're running a test or the full webserver for LiteBIRD
     # Let's assume that we're in the latter case if there is an entity called
     # "satellite", one called "LFT", one called "MFT", and one called "HFT"
     try:
-        satellite = Entity.objects.get(name="satellite")
+        observation = (
+            Entity.objects.get(level=0, name="PLM")
+            .get_children()
+            .get(name="Observation")
+        )
         instruments = {
-            "lft": Entity.objects.get(name="LFT"),
-            "mft": Entity.objects.get(name="MFT"),
-            "hft": Entity.objects.get(name="HFT"),
+            "lft": Entity.objects.get(level=0, name="LFT"),
+            "mft": Entity.objects.get(level=0, name="MFT"),
+            "hft": Entity.objects.get(level=0, name="HFT"),
         }
 
         context["litebird_flag"] = True
 
         # Scanning strategy
-        scanning_quantity = satellite.quantities.get(name="scanning_parameters")
-        scanning_obj = scanning_quantity.data_files.get(
-            release_tags__tag=context["object"].tag
+        scanning_metadata = extract_info_from_metadata(
+            quantities=observation.quantities,
+            release_tag=release_tag,
+            quantity_name="Scanning_Strategy",
+            uuid_field_name="scanning_uuid",
+            result=context,
         )
-        context["scanning_uuid"] = scanning_obj.uuid
 
-        scanning_metadata = json.loads(scanning_obj.metadata)
         for key in (
             "spin_sun_angle_deg",
             "precession_period_min",
             "spin_rate_rpm",
+        ):
+            context[key] = scanning_metadata.get(key, 0)
+
+        observation_time_metadata = extract_info_from_metadata(
+            quantities=observation.quantities,
+            release_tag=release_tag,
+            quantity_name="Observation_Time",
+            uuid_field_name="observation_time_uuid",
+            result=context,
+        )
+
+        for key in (
             "mission_duration_year",
             "observation_duty_cycle",
             "cosmic_ray_loss",
+            "margin",
         ):
-            context[key] = scanning_metadata.get(key, 0)
+            context[key] = observation_time_metadata.get(key, 0)
 
         # Channels
         context["instruments"] = []
         for instr_name, instr_entity in instruments.items():
             channels = []
-            for channel_entity in instr_entity.get_children():
+            for channel_entity in (
+                instr_entity.get_children()
+                .get(name="Frequency_Channels")
+                .get_children()
+            ):
                 channel_quantity = channel_entity.quantities.get(name="channel_info")
                 channel_obj = channel_quantity.data_files.get(
                     release_tags__tag=context["object"].tag
