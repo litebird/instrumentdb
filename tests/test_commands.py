@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import TestCase

@@ -400,8 +400,11 @@ def navigate_tree_of_entities(url_components: List[str]) -> Entity:
     if len(url_components) == 1:
         return cur_obj
 
-    for comp in url_components[1:-1]:
-        cur_obj = get_object_or_404(cur_obj.get_children(), name=comp)
+    try:
+        for comp in url_components[1:-1]:
+            cur_obj = cur_obj.get_children().get(name=comp)
+    except (Entity.DoesNotExist, AttributeError):
+        raise ValueError("Invalid path {}".format("/".join(url_components)))
 
     last_name = url_components[-1]
     if last_name.endswith("/"):

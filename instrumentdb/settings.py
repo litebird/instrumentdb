@@ -15,7 +15,6 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 from pathlib import Path
 import os
 
-from django.conf import settings
 from envparse import Env
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
