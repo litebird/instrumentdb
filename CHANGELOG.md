@@ -1,5 +1,7 @@
 # HEAD
 
+-   Permit longer file names [#123](https://github.com/ziotom78/instrumentdb/pull/123)
+
 -   Return more useful errors when wrong paths are used [#121](https://github.com/ziotom78/instrumentdb/pull/121)
 
 # Version 2.0.0

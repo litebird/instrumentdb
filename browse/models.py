@@ -197,7 +197,7 @@ class Entity(MPTTModel):
         primary_key=True, unique=True, default=uuid.uuid4, editable=False
     )
     name = models.CharField(
-        max_length=256,
+        max_length=512,
         help_text="Descriptive name for this entity",
         validators=[validate_name],
     )
@@ -237,12 +237,12 @@ class FormatSpecification(models.Model):
     )
     document_ref = models.CharField(
         "ID of the specification document",
-        max_length=64,
+        max_length=256,
         unique=True,
         help_text="ID of the technical document",
     )
     title = models.CharField(
-        max_length=256,
+        max_length=512,
         help_text="Title of the document containing the specification "
         + "for a file format",
     )
@@ -255,7 +255,7 @@ class FormatSpecification(models.Model):
     )
     doc_file_name = models.CharField(
         "name of the file containing the specification document",
-        max_length=256,
+        max_length=1024,
         null=True,
         blank=True,
         help_text="Name of the file containing the specification document (optional)",
@@ -295,7 +295,7 @@ class Quantity(models.Model):
         primary_key=True, unique=True, default=uuid.uuid4, editable=False
     )
     name = models.CharField(
-        max_length=256,
+        max_length=512,
         help_text="Descriptive name for this quantity",
         validators=[validate_name],
     )
