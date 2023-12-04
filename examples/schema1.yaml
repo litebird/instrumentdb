@@ -46,6 +46,10 @@ entities:
                 upload_date: "2019-12-13 20:44:51"
                 file_data: "horn01_grasp_v0.fits"
                 spec_version: "0.1"
+                dependencies:
+                  # This is a dependency to a data file that comes
+                  # later in this YAML file
+                  - "37bb70e4-29b2-4657-ba0b-4ccefbc5ae36"
 
           - uuid: "01eeffe6-ac90-4a55-8b72-8d49e5dbe7ad"
             name: "horn01_synth"

@@ -1,5 +1,7 @@
 # HEAD
 
+-   Permit cross-references in dependencies when importing databases [#124](https://github.com/ziotom78/instrumentdb/pull/124)
+
 -   Permit longer file names [#123](https://github.com/ziotom78/instrumentdb/pull/123)
 
 -   Return more useful errors when wrong paths are used [#121](https://github.com/ziotom78/instrumentdb/pull/121)

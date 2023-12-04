@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import json
+from typing import Any, List, Dict
 from uuid import UUID
 import yaml
 
@@ -48,7 +49,13 @@ class Command(BaseCommand):
     output_transaction = True
     requires_migrations_checks = True
 
-    def create_entities(self, entities, parent=None, nest_level=0):
+    def create_entities(
+        self,
+        entities,
+        parent=None,
+        nest_level=0,
+        dependencies_to_add: Dict[UUID, List[UUID]] = {},
+    ):
         for entity_dict in entities:
             cur_entity_name = entity_dict.get("name")
             uuid = entity_dict.get("uuid")
@@ -81,6 +88,7 @@ class Command(BaseCommand):
                     entity_dict["quantities"],
                     parent_entity=cur_entity,
                     nest_level=nest_level + 1,
+                    dependencies_to_add=dependencies_to_add,
                 )
 
             if not self.dry_run:
@@ -91,6 +99,7 @@ class Command(BaseCommand):
                 entity_dict.get("children", []),
                 parent=cur_entity,
                 nest_level=nest_level + 1,
+                dependencies_to_add=dependencies_to_add,
             )
 
     def create_format_specifications(self, specs):
@@ -159,10 +168,17 @@ class Command(BaseCommand):
             if fp:
                 fp.close()
 
-    def create_quantities(self, quantities, parent_entity=None, nest_level=0):
+    def create_quantities(
+        self,
+        quantities,
+        parent_entity=None,
+        nest_level=0,
+        dependencies_to_add: Dict[UUID, List[UUID]] = {},
+    ):
         for quantity_dict in quantities:
             name = quantity_dict.get("name")
             uuid = quantity_dict.get("uuid")
+
             if uuid:
                 uuid = UUID(uuid)
                 if self.no_overwrite and Quantity.objects.filter(uuid=uuid):
@@ -227,9 +243,20 @@ class Command(BaseCommand):
                     nest_level=nest_level + 1,
                 )
 
+                for cur_dict in quantity_dict["data_files"]:
+                    deps = cur_dict.get("dependencies", [])
+                    if deps:
+                        dependencies_to_add[UUID(cur_dict["uuid"])] = deps
+
             quantity.save()
 
-    def create_data_files(self, data_files, parent_quantity=None, nest_level=0):
+    def create_data_files(
+        self,
+        data_files,
+        parent_quantity=None,
+        nest_level=0,
+        dependencies_to_add: Dict[UUID, List[UUID]] = {},
+    ):
         for data_file_dict in data_files:
             name = data_file_dict.get("name")
             uuid = data_file_dict.get("uuid")
@@ -243,10 +270,13 @@ class Command(BaseCommand):
                 )
                 continue
 
+            dependencies = data_file_dict.get("dependencies", [])
+            if dependencies:
+                dependencies_to_add[uuid] = dependencies
+
             metadata = json.dumps(data_file_dict.get("metadata", {}))
             filename = data_file_dict.get("file_name")
             plot_filename = data_file_dict.get("plot_file")
-            dependencies = data_file_dict.get("dependencies", [])
 
             try:
                 upload_date = parse_datetime(data_file_dict.get("upload_date"))
@@ -299,9 +329,6 @@ class Command(BaseCommand):
                     spaces(nest_level) + f'Data file "{name}" ({filename})'
                 )
 
-            for cur_dep in dependencies:
-                self.stdout.write(spaces(nest_level) + f"  Depends on {cur_dep[0:6]}")
-
             if self.dry_run:
                 continue
 
@@ -323,17 +350,49 @@ class Command(BaseCommand):
                     "plot_mime_type": data_file_dict.get("plot_mime_type"),
                 },
             )
-
-            for cur_dep in dependencies:
-                reference = DataFile.objects.get(uuid=cur_dep)
-                cur_data_file.dependencies.add(reference)
-
             cur_data_file.save()
 
             if fp:
                 fp.close()
             if plot_fp:
                 plot_fp.close()
+
+    def update_dependencies(self, dependencies_to_add: Dict[UUID, List[UUID]]):
+        for data_file_uuid, dependencies in dependencies_to_add.items():
+            if not dependencies:
+                continue
+
+            try:
+                cur_data_file = DataFile.objects.get(uuid=data_file_uuid)
+            except DataFile.DoesNotExist:
+                raise CommandError(
+                    "There is no data file with UUID {}".format(
+                        data_file_uuid.hex[0:6],
+                    )
+                )
+            for cur_dep in dependencies:
+                try:
+                    reference = DataFile.objects.get(uuid=cur_dep)
+                    cur_data_file.dependencies.add(reference)
+                    self.stdout.write(
+                        (
+                            'Adding "{dep_name}" ({dep_uuid}) as a dependency '
+                            + 'to "{parent_name}" ({parent_uuid})'
+                        ).format(
+                            dep_name=reference.name,
+                            dep_uuid=reference.uuid.hex[0:6],
+                            parent_name=cur_data_file.name,
+                            parent_uuid=cur_data_file.uuid.hex[0:6],
+                        )
+                    )
+                except DataFile.DoesNotExist:
+                    raise CommandError(
+                        (
+                            'Object with UUID "{cur_dep}" does not exist but is '
+                            + 'listed in the dependencies for "{name}"'
+                        ).format(cur_dep=cur_dep, name=cur_data_file.name)
+                    )
+            cur_data_file.save()
 
     def create_releases(self, releases):
         for rel_dict in releases:
@@ -435,9 +494,26 @@ etc.) will be looked in the directory where this file resides.
                     schema = json.load(inpf)
 
             self.create_format_specifications(schema.get("format_specifications", []))
-            self.create_entities(schema.get("entities", []))
-            self.create_quantities(schema.get("quantities", []))
-            self.create_data_files(schema.get("data_files", []))
+
+            # FIRST add all the data files, THEN update the dependencies, otherwise
+            # some dependencies might not be found because they refer to data files
+            # that have not been added yet. Note that data files can appear either
+            # in the entity/quantity tree or in a separated "data_files" section
+            # in the JSON/YAML file, so we must gather all of them before calling
+            # self.update_dependencies(). That's the reason why we pass the
+            # dictionary "dependencies_to_add" to all the self_create_* methods
+            dependencies_to_add = {}  # type: Dict[UUID, List[UUID]]
+            self.create_entities(
+                schema.get("entities", []), dependencies_to_add=dependencies_to_add
+            )
+            self.create_quantities(
+                schema.get("quantities", []), dependencies_to_add=dependencies_to_add
+            )
+            self.create_data_files(
+                schema.get("data_files", []), dependencies_to_add=dependencies_to_add
+            )
+            self.update_dependencies(dependencies_to_add)
+
             self.create_releases(schema.get("releases", []))
 
         update_release_file_dumps()

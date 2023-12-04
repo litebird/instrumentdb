@@ -16,6 +16,15 @@ def check_db_size(
     test.assertEqual(len(Release.objects.all()), release_len)
 
 
+def check_deps_in_schema(test):
+    horn01_synth_obj = DataFile.objects.get(uuid="37bb70e4-29b2-4657-ba0b-4ccefbc5ae36")
+    horn01_grasp_obj = DataFile.objects.get(uuid="a6dd07ee-9721-4453-abb1-e58aa53a9c01")
+
+    test.assertTrue(
+        horn01_synth_obj.dependencies.filter(uuid=horn01_grasp_obj.uuid).exists()
+    )
+
+
 class TestNestedYamlIO(TestCase):
     def setUp(self):
         self.input_file = Path(__file__).parent / ".." / "examples" / "schema1.yaml"
@@ -43,6 +52,7 @@ class TestNestedYamlIO(TestCase):
             data_file_len=3,
             release_len=1,
         )
+        check_deps_in_schema(self)
 
     def test_import_nested_yaml_no_overwrite(self):
         # Test that --no-overwrite works
@@ -55,6 +65,7 @@ class TestNestedYamlIO(TestCase):
             data_file_len=3,
             release_len=1,
         )
+        check_deps_in_schema(self)
 
 
 class TestPlainYamlIO(TestCase):
@@ -69,6 +80,7 @@ class TestPlainYamlIO(TestCase):
             data_file_len=3,
             release_len=1,
         )
+        check_deps_in_schema(self)
 
 
 class TestTutorial(TestCase):
