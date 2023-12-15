@@ -1,5 +1,9 @@
 # HEAD
 
+# Version 2.0.1
+
+-   Make the links in the top bar active when appropriate [#125](https://github.com/ziotom78/instrumentdb/pull/125)
+
 -   Permit cross-references in dependencies when importing databases [#124](https://github.com/ziotom78/instrumentdb/pull/124)
 
 -   Permit longer file names [#123](https://github.com/ziotom78/instrumentdb/pull/123)
