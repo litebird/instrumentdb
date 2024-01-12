@@ -31,7 +31,7 @@ from browse.views import (
     FormatSpecificationListView,
     FormatSpecificationDownloadView,
     QuantityView,
-    ReleaseDocumentDownloadView,
+    download_release_document,
     ReleaseListView,
     ReleaseView,
     UserViewSet,
@@ -101,7 +101,7 @@ urlpatterns = [
     ),
     path(
         "browse/releases/<pk>/document/",
-        ReleaseDocumentDownloadView.as_view(),
+        download_release_document,
         name="release-document-download-view",
     ),
     path(

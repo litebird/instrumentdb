@@ -1,5 +1,9 @@
 # HEAD
 
+# Version 2.0.2
+
+-   Make sure that unauthorized users cannot browse the contents of the database [#128](https://github.com/ziotom78/instrumentdb/pull/128)
+
 # Version 2.0.1
 
 -   Make the links in the top bar active when appropriate [#125](https://github.com/ziotom78/instrumentdb/pull/125)

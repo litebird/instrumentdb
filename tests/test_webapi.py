@@ -34,6 +34,7 @@ def _create_test_user_and_authenticate(client, superuser: bool):
         )
 
     client.force_authenticate(user=test_user)
+    return test_user
 
 
 def create_format_spec(client, document_ref):
@@ -139,7 +140,9 @@ def create_release_spec(client, tag, comment="", data_files=[]):
 
 class FormatSpecificationTests(APITestCase):
     def setUp(self) -> None:
-        _create_test_user_and_authenticate(client=self.client, superuser=True)
+        self.user = _create_test_user_and_authenticate(
+            client=self.client, superuser=True
+        )
 
     def test_create_format_spec(self):
         """
@@ -157,7 +160,9 @@ class FormatSpecificationTests(APITestCase):
 
 class EntityTests(APITestCase):
     def setUp(self) -> None:
-        _create_test_user_and_authenticate(client=self.client, superuser=True)
+        self.user = _create_test_user_and_authenticate(
+            client=self.client, superuser=True
+        )
 
     def test_create_entity(self):
         """
@@ -233,7 +238,9 @@ class EntityTests(APITestCase):
 
 class QuantityTests(APITestCase):
     def setUp(self):
-        _create_test_user_and_authenticate(client=self.client, superuser=True)
+        self.user = _create_test_user_and_authenticate(
+            client=self.client, superuser=True
+        )
 
         self.formatspec_response = create_format_spec(self.client, "DUMMY_REF_001")
         self.assertEqual(self.formatspec_response.status_code, status.HTTP_201_CREATED)
@@ -272,7 +279,9 @@ class QuantityTests(APITestCase):
 
 class DataFileTests(APITestCase):
     def setUp(self):
-        _create_test_user_and_authenticate(client=self.client, superuser=True)
+        self.user = _create_test_user_and_authenticate(
+            client=self.client, superuser=True
+        )
 
         self.formatspec_response = create_format_spec(self.client, "DUMMY_REF_001")
         self.assertEqual(self.formatspec_response.status_code, status.HTTP_201_CREATED)
@@ -338,7 +347,9 @@ class DataFileTests(APITestCase):
 
 class ReleaseTests(APITestCase):
     def setUp(self):
-        _create_test_user_and_authenticate(client=self.client, superuser=True)
+        self.user = _create_test_user_and_authenticate(
+            client=self.client, superuser=True
+        )
 
         self.formatspec_response = create_format_spec(self.client, "DUMMY_REF_001")
         self.entity_response = create_entity_spec(self.client, "test_entity")
@@ -359,6 +370,8 @@ class ReleaseTests(APITestCase):
         """
         Ensure we can create a new Release object.
         """
+        self.client.force_login(self.user)
+
         response = create_release_spec(self.client, "v1.0")
 
         # Check the result of the POST call
@@ -395,7 +408,7 @@ class ReleaseTests(APITestCase):
 
         # Download the release document
 
-        response = self.client.get("/browse/releases/v1.0/document/")
+        response = self.client.get("/browse/releases/v1.0/document/", follow=True)
         self.assertEqual(response.content, b"Contents of the release document")
 
 

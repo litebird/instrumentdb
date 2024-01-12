@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "instrumentdb"
-version = "2.0.1"
+version = "2.0.2"
 description = ""
 authors = ["Maurizio Tomasi <ziotom78@gmail.com>"]
 
@@ -14,7 +14,7 @@ django-filter = "^2.2.0"
 pyyaml = "^6.0.0"
 django-mptt = "^0.14.0"
 drf-yasg = "^1.21.7"
-gitpython = "^3.1.37"
+gitpython = "^3.1.41"
 envparse = "^0.2.0"
 sphinx = "^5.1.1"
 django-sslserver = "^0.22"

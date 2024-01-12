@@ -76,7 +76,7 @@ def entity_tree_view(request):
     )
 
 
-class EntityView(DetailView):
+class EntityView(LoginRequiredMixin, DetailView):
     model = Entity
 
     def get_context_data(self, **kwargs):
@@ -92,7 +92,7 @@ class EntityView(DetailView):
 ###########################################################################
 
 
-class QuantityView(DetailView):
+class QuantityView(LoginRequiredMixin, DetailView):
     model = Quantity
 
     def get_context_data(self, **kwargs):
@@ -108,7 +108,7 @@ class QuantityView(DetailView):
 ###########################################################################
 
 
-class DataFileView(DetailView):
+class DataFileView(LoginRequiredMixin, DetailView):
     model = DataFile
 
     def get_context_data(self, **kwargs):
@@ -121,11 +121,11 @@ class DataFileView(DetailView):
         return context
 
 
-class FormatSpecificationListView(ListView):
+class FormatSpecificationListView(LoginRequiredMixin, ListView):
     model = FormatSpecification
 
 
-class FormatSpecificationDownloadView(View):
+class FormatSpecificationDownloadView(LoginRequiredMixin, View):
     def get(self, request, pk):
         "Allow the user to download a data file"
 
@@ -148,7 +148,7 @@ class FormatSpecificationDownloadView(View):
         return resp
 
 
-class DataFileDownloadView(View):
+class DataFileDownloadView(LoginRequiredMixin, View):
     def get(self, request, pk):
         "Allow the user to download a data file"
 
@@ -169,7 +169,7 @@ class DataFileDownloadView(View):
         return resp
 
 
-class DataFilePlotDownloadView(View):
+class DataFilePlotDownloadView(LoginRequiredMixin, View):
     def get(self, request, pk):
         "Allow the user to download the plot associated with a data file"
 
@@ -191,26 +191,24 @@ class DataFilePlotDownloadView(View):
         return resp
 
 
-class ReleaseDocumentDownloadView(View):
-    def get(self, request, pk):
-        "Allow the user to download a release document"
+@login_required
+def download_release_document(request, pk):
+    cur_object = get_object_or_404(Release, pk=pk)
+    release_document_data = cur_object.release_document
 
-        cur_object = get_object_or_404(Release, pk=pk)
-        release_document_data = cur_object.release_document
+    try:
+        release_document_data.open()
+    except ValueError:
+        raise Http404("The release document was not uploaded to the database")
 
-        try:
-            release_document_data.open()
-        except ValueError:
-            raise Http404("The release document was not uploaded to the database")
+    data = release_document_data.read()
+    resp = HttpResponse(data, content_type=cur_object.release_document_mime_type)
 
-        data = release_document_data.read()
-        resp = HttpResponse(data, content_type=cur_object.release_document_mime_type)
-
-        resp["Content-Disposition"] = 'filename="{name}{ext}"'.format(
-            name=cur_object.tag,
-            ext=mimetypes.guess_extension(cur_object.release_document_mime_type),
-        )
-        return resp
+    resp["Content-Disposition"] = 'filename="{name}{ext}"'.format(
+        name=cur_object.tag,
+        ext=mimetypes.guess_extension(cur_object.release_document_mime_type),
+    )
+    return resp
 
 
 ###########################################################################
@@ -222,7 +220,7 @@ class ReleaseListView(LoginRequiredMixin, ListView):
     ordering = ["-tag"]
 
 
-class ReleaseView(DetailView):
+class ReleaseView(LoginRequiredMixin, DetailView):
     model = Release
 
     def get_context_data(self, **kwargs):
@@ -235,7 +233,7 @@ class ReleaseView(DetailView):
         return context
 
 
-class ReleaseDownloadView(View):
+class ReleaseDownloadView(LoginRequiredMixin, View):
     def get(self, request, pk):
         "Allow the user to download a release JSON file"
 
@@ -383,6 +381,9 @@ def navigate_tree_of_entities(url_components: List[str]) -> Entity:
     # caller mistakenly writes two `/` characters, like in
     # `/tree/satellite//telescope/cad`.)
     url_components = [x for x in url_components if x != ""]
+
+    if not url_components:
+        raise Http404("Empty path to entity")
 
     matching_entries = Entity.objects.filter(name=url_components[0])
 
