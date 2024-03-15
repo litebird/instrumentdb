@@ -5,7 +5,7 @@ from uuid import UUID
 
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIRequestFactory
 from browse.models import (
     FormatSpecification,
     Entity,
@@ -15,6 +15,7 @@ from browse.models import (
 )
 from django.contrib.auth.models import User
 
+from browse.views import DataFileViewSet
 
 TEST_ACCOUNT_EMAIL = "test@localhost"
 TEST_ACCOUNT_USER = "test_user"
@@ -50,8 +51,6 @@ def create_format_spec(client, document_ref):
             "document_ref": document_ref,
             "title": "My dummy document",
             "file_mime_type": "application/text",
-        },
-        files={
             "doc_file": format_spec_file,
         },
     )
@@ -156,6 +155,23 @@ class FormatSpecificationTests(APITestCase):
         self.assertEqual(
             FormatSpecification.objects.get().document_ref, "DUMMY_REF_001"
         )
+
+    def test_download_format_specification(self):
+        """
+        Ensure we can create a new DataFile object.
+        """
+        response = create_format_spec(self.client, "DUMMY_REF_001")
+
+        # Now ask for a JSON representation of the object
+        json_dict = self.client.get(response.data["url"]).json()
+
+        response = self.client.get(json_dict["download_link"])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/plain")
+
+        expected_content = b"Test file"
+        actual_content = b"".join(chunk for chunk in response.streaming_content)
+        self.assertEqual(actual_content, expected_content)
 
 
 class EntityTests(APITestCase):
@@ -344,6 +360,28 @@ class DataFileTests(APITestCase):
         # Check the result of the POST call
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_download_datafile(self):
+        """
+        Ensure we can create a new DataFile object.
+        """
+        response = create_data_file_spec(
+            self.client,
+            name="test_datafile",
+            metadata={"a": 10, "b": "hello"},
+            quantity=self.quantity_response.data["url"],
+        )
+
+        # Now ask for a JSON representation of the object
+        json = self.client.get(response.data["url"]).json()
+
+        response = self.client.get(json["download_link"])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/text")
+
+        expected_content = b"1,2,3,4,5"
+        actual_content = b"".join(chunk for chunk in response.streaming_content)
+        self.assertEqual(actual_content, expected_content)
+
 
 class ReleaseTests(APITestCase):
     def setUp(self):
@@ -465,3 +503,12 @@ class AuthenticateTest(APITestCase):
             quantity=self.quantity_response.data["url"],
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+def test_unauthenticated_access(self):
+    view = DataFileViewSet.as_view({"get": "list"})
+    factory = APIRequestFactory()
+    request = factory.get("/data-files/")
+
+    response = view(request)
+    self.assertEqual(response.status_code, 401)  # Assert unauthorized access

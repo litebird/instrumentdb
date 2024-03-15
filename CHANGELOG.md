@@ -1,5 +1,9 @@
 # HEAD
 
+# Version 2.0.3
+
+-   Add RESTful API endpoints for downloading files [#131](https://github.com/ziotom78/instrumentdb/pull/131)
+
 # Version 2.0.2
 
 -   Make sure that unauthorized users cannot browse the contents of the database [#128](https://github.com/ziotom78/instrumentdb/pull/128)

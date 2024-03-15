@@ -55,7 +55,7 @@ class FormatSpecificationSerializer(serializers.HyperlinkedModelSerializer):
             instance
         )
         representation["download_link"] = reverse(
-            "format-spec-download-view",
+            "formatspecification-download",
             kwargs={"pk": instance.uuid},
             request=self.context["request"],
         )
@@ -177,16 +177,19 @@ class DataFileSerializer(serializers.HyperlinkedModelSerializer):
     def to_representation(self, instance):
         representation = super(DataFileSerializer, self).to_representation(instance)
 
-        representation["download_link"] = reverse(
-            "data-file-download-view",
-            kwargs={"pk": instance.uuid},
-            request=self.context["request"],
-        )
-        representation["plot_download_link"] = reverse(
-            "data-file-plot-view",
-            kwargs={"pk": instance.uuid},
-            request=self.context["request"],
-        )
+        if instance.file_data:
+            representation["download_link"] = reverse(
+                "datafile-download",
+                kwargs={"pk": instance.uuid},
+                request=self.context["request"],
+            )
+
+        if instance.plot_file:
+            representation["plot_download_link"] = reverse(
+                "datafile-plot",
+                kwargs={"pk": instance.uuid},
+                request=self.context["request"],
+            )
 
         return representation
 

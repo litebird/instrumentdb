@@ -10,16 +10,16 @@ from typing import List
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, FileResponse
 from django.views.generic.base import View
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from django.contrib.auth.models import User, Group
 from django.shortcuts import render, redirect, get_object_or_404
 
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, renderers
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.pagination import PageNumberPagination
 
 import instrumentdb
@@ -255,6 +255,19 @@ class ReleaseDownloadView(LoginRequiredMixin, View):
 # REST API
 
 
+# This is used to create an API endpoint to download files
+class PassthroughRenderer(renderers.BaseRenderer):
+    """
+    Return data as-is. View should supply a Response.
+    """
+
+    media_type = ""
+    format = ""
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -292,6 +305,20 @@ class FormatSpecificationViewSet(viewsets.ModelViewSet):
 
     queryset = FormatSpecification.objects.all()
     serializer_class = FormatSpecificationSerializer
+
+    @action(methods=["get"], detail=True, renderer_classes=(PassthroughRenderer,))
+    def download(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not instance.doc_file:
+            raise Http404()
+
+        file_handle = instance.doc_file.open()
+        response = FileResponse(file_handle, content_type=instance.doc_mime_type)
+        response["Content-Length"] = instance.doc_file.size
+        response[
+            "Content-Disposition"
+        ] = f'attachment; filename="{instance.doc_file_name}"'
+        return response
 
 
 class EntityViewSet(viewsets.ModelViewSet):
@@ -342,6 +369,32 @@ class DataFileViewSet(viewsets.ModelViewSet):
         if self.request.method in ADMIN_ONLY_HTTP_METHODS:
             return [permissions.IsAdminUser()]
         return [permissions.IsAuthenticated()]
+
+    @action(methods=["get"], detail=True, renderer_classes=(PassthroughRenderer,))
+    def download(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not instance.file_data:
+            raise Http404()
+
+        file_handle = instance.file_data.open()
+        response = FileResponse(
+            file_handle, content_type=instance.quantity.format_spec.file_mime_type
+        )
+        response["Content-Length"] = instance.file_data.size
+        response["Content-Disposition"] = f'attachment; filename="{instance.name}"'
+        return response
+
+    @action(methods=["get"], detail=True, renderer_classes=(PassthroughRenderer,))
+    def plot(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not instance.plot_file_data:
+            raise Http404()
+
+        file_handle = instance.file_data.open()
+        response = FileResponse(file_handle, content_type=instance.plot_mime_type)
+        response["Content-Length"] = instance.file_data.size
+        response["Content-Disposition"] = f'attachment; filename="{instance.name}"'
+        return response
 
     queryset = DataFile.objects.all()
     serializer_class = DataFileSerializer
