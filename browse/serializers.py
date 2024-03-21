@@ -113,7 +113,9 @@ def serializer_validate_json(value) -> None:
     try:
         validate_json(value)
     except ValidationError as err:
-        raise serializers.ValidationError(detail=err.message, code=err.code)
+        raise serializers.ValidationError(
+            detail=(err.message % err.params), code=err.code
+        )
 
 
 class JSONField(serializers.Field):

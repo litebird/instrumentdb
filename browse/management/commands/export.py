@@ -85,9 +85,9 @@ If the folder does not exist, it will be created.""",
             ReleaseDumpConfiguration(
                 no_attachments=options["no_attachments"],
                 exist_ok=options["force"],
-                output_format=DumpOutputFormat.JSON
-                if options["json"]
-                else DumpOutputFormat.YAML,
+                output_format=(
+                    DumpOutputFormat.JSON if options["json"] else DumpOutputFormat.YAML
+                ),
                 skip_empty_quantities=options["skip_empty_quantities"],
                 skip_empty_entities=options["skip_empty_entities"],
                 only_tree=options["only_tree"],

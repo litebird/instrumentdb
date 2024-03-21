@@ -315,9 +315,9 @@ class FormatSpecificationViewSet(viewsets.ModelViewSet):
         file_handle = instance.doc_file.open()
         response = FileResponse(file_handle, content_type=instance.doc_mime_type)
         response["Content-Length"] = instance.doc_file.size
-        response[
-            "Content-Disposition"
-        ] = f'attachment; filename="{instance.doc_file_name}"'
+        response["Content-Disposition"] = (
+            f'attachment; filename="{instance.doc_file_name}"'
+        )
         return response
 
 

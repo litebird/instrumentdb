@@ -833,10 +833,12 @@ def save_schema(
             ),
             (
                 "format_specifications",
-                {}
-                if configuration.only_tree
-                else dump_specifications(
-                    configuration, FormatSpecification.objects.all()
+                (
+                    {}
+                    if configuration.only_tree
+                    else dump_specifications(
+                        configuration, FormatSpecification.objects.all()
+                    )
                 ),
             ),
             (
@@ -849,15 +851,19 @@ def save_schema(
             ),
             (
                 "data_files",
-                {}
-                if configuration.only_tree
-                else dump_data_files(configuration, data_files),
+                (
+                    {}
+                    if configuration.only_tree
+                    else dump_data_files(configuration, data_files)
+                ),
             ),
             (
                 "releases",
-                {}
-                if configuration.only_tree
-                else dump_releases(configuration, release_tag),
+                (
+                    {}
+                    if configuration.only_tree
+                    else dump_releases(configuration, release_tag)
+                ),
             ),
         ]
     )
