@@ -1,45 +1,60 @@
-{% extends "browse/base_generic.html" %}
-{% block title %}Releases{% endblock %}
-
+{% extends "browse/base_generic.html" %} {% block title %}Releases{% endblock %}
 {% block body %}
 
-<h1>Database Releases</h1>
+<h2>Recent Updates</h2>
+<hr />
+<p>
+    <b>11 Feb 2026 -</b> PostKDP2 IMo Option 1 was updated after a correction of
+    the sensitivity values.
+</p>
+<br />
+<br />
+<h2>Database Releases</h2>
 
 <div class="list-group">
-  <table class="table table-bordered table-striped">
-      <thead>
-      <tr>
-          <th scope="col">Version tag</th>
-          <th scope="col">Date</th>
-          <th scope="col">Comment</th>
-          <th scope="col">Document</th>
-          <th scope="col">JSON file</th>
-      </tr>
-      </thead>
-      <tbody>
-      {% for obj in object_list %}
-      <tr>
-          <th scope="row">
-              <a href="{% url 'release-view' obj.tag %}">{{ obj.tag }}</a>
-          </th>
-          <td>{{ obj.rel_date }}</td>
-          <td>{{ obj.comment }}</td>
-          <td>
-              {% if obj.release_document %}
-              <a href="{% url 'release-document-download-view' obj.tag %}" target="_blank" rel="noopener noreferrer">
-                Link
-              </a>
-              {% endif %}
-          </td>
-          <td>
-              <a class="btn btn-primary" href="{% url 'release-download-view' obj.tag %}">
-                Download ({{ obj.json_file.size|filesizeformat }})
-              </a>
-          </td>
-      </tr>
-      {% endfor %}
-      </tbody>
-  </table>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Version tag</th>
+                <th scope="col">Date</th>
+                <th scope="col">Description</th>
+                <th scope="col">Document</th>
+                <th scope="col">Wiki page</th>
+                <th scope="col">JSON file</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for obj in object_list %}
+            <tr>
+                <th scope="row">
+                    <a href="{% url 'release-view' obj.tag %}">{{ obj.tag }}</a>
+                </th>
+                <td>{{ obj.rel_date }}</td>
+                <td>{{ obj.comment }}</td>
+                <td>
+                    {% if obj.release_document %}
+                    <a
+                        href="{% url 'release-document-download-view' obj.tag %}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Link
+                    </a>
+                    {% endif %}
+                </td>
+                <td>{{ obj.wiki }}</td>
+                <td>
+                    <a
+                        class="btn btn-primary"
+                        href="{% url 'release-download-view' obj.tag %}"
+                    >
+                        Download ({{ obj.json_file.size|filesizeformat }})
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 {% endblock %}

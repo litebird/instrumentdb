@@ -1,0 +1,199 @@
+{% extends "browse/base_generic.html" %} {% block title %}Focal Plane
+UI{%endblock %} {% block body %}
+<!--<h1>Focal Plane UI</h1>
+<p>This page displays a LiteBIRD Focal Plane interactive visualization tool.</p>-->
+
+<!-- Container for the two-column layout -->
+<div style="display: flex; width: 100%">
+    <!-- Left Column -->
+    <div
+        style="
+            flex: 1;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        "
+    >
+        <!-- Container for the Plotly plot -->
+        <div id="myPlot" style="width: 150%; height: 500px"></div>
+
+        <!-- Load Plotly.js from CDN -->
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+        <!-- JavaScript to create the plot -->
+        <script>
+                  document.addEventListener('DOMContentLoaded', function() {
+                  const xValues = {{ x_values|safe }};
+                  const yValues = {{ y_values|safe }};
+                  const uuids = {{ uuids|safe }};
+                  const channel = {{ channel|safe }};
+                  const size = {{ size|safe }};
+                  const pol = {{ pol|safe }};
+                  const colors = channel.map(val =>
+                      val.slice(0, 2) == "L1" ? 'blue' :
+                      val.slice(0, 2) == "L2" ? 'orange' :
+                      val.slice(0, 2) == "M1" ? 'red' :
+                      val.slice(0, 2) == "M2" ? 'black' :
+                      val.slice(0, 2) == "H1" ? 'purple' :
+                      val.slice(0, 2) == "H2" ? 'pink' :
+                      'gray'
+                  );
+                  const pols = pol.map(val =>
+                      val == 0 ? 'circle-cross':
+                      val == 90 ? 'circle-cross' :
+                      val == 45 ? 'circle-x' :
+                      val == 135 ? 'circle-x' :
+                      27
+                  );
+
+
+                  const data = [
+                      {
+                      x: xValues,
+                      y: yValues,
+                      type: 'scatter',
+                      mode: 'markers',
+                      marker: { color: colors, symbol: pols, size: size},
+                      customdata: uuids
+                      }
+                  ];
+                  const layout = {
+                      xaxis: { title: 'X_sky' },
+                      yaxis: { title: 'Y_sky' },
+                      margin: { t: 8, b: 40, l: 40, r: 8 },
+                      autosize: true,
+                  };
+
+                  const config = {
+
+                    doubleClickDelay: 0,
+                    responsive: false
+                  };
+
+                  Plotly.newPlot('myPlot', data, layout, config)
+
+                  const plotDiv = document.getElementById('myPlot');
+
+                  plotDiv.on('plotly_click', function(data) {
+                      const point = data.points[0];
+                      if (point) {
+                          const this_uuid = point.customdata;
+
+                          if (this_uuid) {
+                              const url = new URL("{% url 'handle-plot-click' %}", window.location.origin);
+                              url.searchParams.append('uuid', this_uuid);
+
+                              fetch(url, {
+                                  headers:{
+                                      'Accept': 'application/json',
+                                      'X-Requested-With': 'XMLHttpRequest',
+                                  },
+                              })
+                              .then(response => response.json())
+                              .then(responseData => {
+                                  const paramsElement = document.getElementById('params');
+
+                                  // Store data globally
+                                  window.detectorData = responseData;
+
+                                  // Create release selector and buttons
+                                  let buttonsHTML = '<h3>Select a detector:</h3>';
+
+                                  // Add release selectbox with warning
+                                  buttonsHTML += '<div style="margin-bottom: 15px; padding: 12px; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">';
+                                  buttonsHTML += '<label for="releaseSelect" style="margin-right: 10px; font-weight: bold;">Release (required to copy path):</label>';
+                                  buttonsHTML += '<select id="releaseSelect" style="padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc;">';
+                                  buttonsHTML += '<option value="">-- Select a release --</option>';
+                                  buttonsHTML += '<option value="IMo_vPostKDP2">v2.1 (PostKDP2 Fixed Feb 2026)</option>';
+                                  buttonsHTML += '</select>';
+                                  buttonsHTML += '</div>';
+
+                                  buttonsHTML += '<div style="display: flex; gap: 10px; flex-wrap: wrap;">';
+
+                                  Object.keys(responseData).forEach(uuid => {
+                                      // Get the detector name from the metadata
+                                      const metadata = responseData[uuid];
+                                      const detectorName = metadata.name || metadata.detector || metadata.id || uuid.substring(0, 8);
+
+                                      buttonsHTML += `<div style="display: flex; gap: 5px; align-items: center;">
+                                          <button onclick="openDetectorInfo('${uuid}')" style="padding: 8px 12px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px;">
+                                              ${detectorName}
+                                          </button>
+                                          <button onclick="copyToClipboard('${uuid}')" style="padding: 8px 10px; cursor: pointer; background-color: #6c757d; color: white; border: none; border-radius: 4px; font-size: 14px;" title="Copy UUID">
+                                              📋
+                                          </button>
+                                      </div>`;
+                                  });
+
+
+                                  buttonsHTML += '</div>';
+                                  buttonsHTML += '<div id="dataDisplay" style="margin-top: 20px;"></div>';
+
+                                  paramsElement.innerHTML = buttonsHTML;
+                              })
+
+                              .catch(error => console.error('Error:', error))
+                          }
+                      }
+                  });
+
+
+
+                  });
+              function openDetectorInfo(uuid) {
+                const url = `http://127.0.0.1:8000/browse/data_files/${uuid}`;
+                window.open(url, '_blank');
+              }
+
+              function copyToClipboard(uuid) {
+                // Get the selected release
+                const releaseSelect = document.getElementById('releaseSelect');
+                const selectedRelease = releaseSelect ? releaseSelect.value : '';
+
+                // Check if a release is selected
+                if (!selectedRelease) {
+                    alert('⚠️ Please select a release before copying.');
+                    return;
+                }
+
+                const url = new URL("{% url 'get-full-path' %}", window.location.origin);
+                url.searchParams.append('uuid', uuid);
+
+                fetch(url, {
+                    headers:{
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                })
+                .then(response => response.json())
+                .then(responseData => {
+                  // Append release to the path
+                  const fullPath = `${responseData}/${selectedRelease}`;
+
+                  navigator.clipboard.writeText(fullPath).then(() => {
+                      alert('Full path copied to clipboard!');
+                  }).catch(err => {
+                      console.error('Failed to copy:', err);
+                  });
+                })
+
+                .catch(error => console.error('Error:', error))
+            }
+        </script>
+    </div>
+
+    <!-- Right Column -->
+    <div
+        style="
+            flex: 1;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            margin-left: 0;
+            margin-right: 0;
+        "
+    >
+        <p id="params">Select a pixel on the plot.</p>
+    </div>
+</div>
+{% endblock %}
