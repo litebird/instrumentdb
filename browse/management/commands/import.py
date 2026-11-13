@@ -5,7 +5,8 @@ import json
 from typing import Any, List, Dict
 from uuid import UUID
 import yaml
-
+from django.db.models.signals import m2m_changed
+from browse.signals import update_release_json_on_m2m
 from django.core.files import File
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import is_aware, make_aware
@@ -16,7 +17,6 @@ from browse.models import (
     DataFile,
     FormatSpecification,
     Release,
-    update_release_file_dumps,
 )
 
 
@@ -71,7 +71,7 @@ class Command(BaseCommand):
             if not self.dry_run:
                 cur_entity = Entity.objects.filter(uuid=uuid)
                 if not (self.no_overwrite and cur_entity):
-                    (cur_entity, _) = Entity.objects.update_or_create(
+                    cur_entity, _ = Entity.objects.update_or_create(
                         uuid=uuid,
                         defaults={
                             "name": cur_entity_name,
@@ -151,7 +151,7 @@ class Command(BaseCommand):
             file_mime_type = spec_dict.get("file_mime_type", "")
 
             if not self.dry_run:
-                (format_spec, _) = FormatSpecification.objects.update_or_create(
+                format_spec, _ = FormatSpecification.objects.update_or_create(
                     uuid=uuid,
                     defaults={
                         "document_ref": document_ref,
@@ -227,7 +227,7 @@ class Command(BaseCommand):
             if self.dry_run:
                 continue
 
-            (quantity, _) = Quantity.objects.update_or_create(
+            quantity, _ = Quantity.objects.update_or_create(
                 uuid=uuid,
                 defaults={
                     "name": name,
@@ -337,7 +337,7 @@ class Command(BaseCommand):
                 parent_uuid = data_file_dict.get("quantity", "")
                 quantity = Quantity.objects.get(uuid=parent_uuid)
 
-            (cur_data_file, _) = DataFile.objects.update_or_create(
+            cur_data_file, _ = DataFile.objects.update_or_create(
                 uuid=uuid,
                 defaults={
                     "name": name,
@@ -430,7 +430,7 @@ class Command(BaseCommand):
             )
 
             if not self.dry_run:
-                (cur_release, _) = Release.objects.update_or_create(
+                cur_release, _ = Release.objects.update_or_create(
                     tag=tag,
                     defaults={
                         "rel_date": rel_date,
@@ -440,9 +440,16 @@ class Command(BaseCommand):
                     },
                 )
 
+                m2m_changed.disconnect(
+                    update_release_json_on_m2m, sender=Release.data_files.through
+                )
                 for cur_uuid in data_files:
                     cur_release.data_files.add(DataFile.objects.get(uuid=cur_uuid))
 
+                m2m_changed.connect(
+                    update_release_json_on_m2m, sender=Release.data_files.through
+                )
+                cur_release.generate_json_dump()
                 cur_release.save()
 
                 if release_fp:
@@ -515,5 +522,3 @@ etc.) will be looked in the directory where this file resides.
             self.update_dependencies(dependencies_to_add)
 
             self.create_releases(schema.get("releases", []))
-
-        update_release_file_dumps()

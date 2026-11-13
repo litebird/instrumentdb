@@ -25,15 +25,18 @@ in the database:
   "quantity" (see above).
 
 """
+
 import mimetypes
 from collections import namedtuple, OrderedDict
 from dataclasses import dataclass
 from enum import Enum
 import logging
 from pathlib import Path
+from django.core.files.base import ContentFile
 import re
 from tempfile import TemporaryDirectory
-
+import tarfile
+import os
 import uuid
 from typing import Optional
 
@@ -134,8 +137,7 @@ DOCUMENT_FILE_TYPES = [
         description="Microsoft Excel (.xls)",
     ),
     FileType(
-        mime_type="application/vnd.openxmlformats-officedocument"
-        ".spreadsheetml.sheet",
+        mime_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         file_extension="xlsx",
         description="Microsoft Excel (.xlsx)",
     ),
@@ -497,13 +499,19 @@ class Release(models.Model):
         help_text="A JSON dump of the release, ready to be downloaded",
     )
 
+    tarball = models.FileField(
+        blank=True,
+        editable=False,
+        upload_to="",
+        help_text="A tarball of the release, including full json file, \
+        format specifications, and data files, ready to be downloaded",
+    )
+
     def save(self, *args, **kwargs):
-        result = super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
-        if bool(self.json_file):
-            # The JSON dump already exists
-            return
-
+    def generate_json_dump(self):
+        """(Re)generate the JSON dump for this release"""
         with TemporaryDirectory() as tempdir:
             temp_path = Path(tempdir)
             json_file_path = dump_db_to_json(
@@ -519,13 +527,45 @@ class Release(models.Model):
                 release_tag=str(self.tag),
             )
 
-            with json_file_path.open("rt") as json_file:
+            with json_file_path.open("rb") as json_file:
+                file_content = json_file.read()
                 self.json_file.save(
                     name=f"schema_{self.tag}.json",
-                    content=File(json_file),
+                    content=ContentFile(file_content),
+                    save=False,
                 )
 
-        return result
+        with TemporaryDirectory() as tempdir:
+            temp_path = Path(tempdir) / str(self.tag)
+            dump_db_to_json(
+                ReleaseDumpConfiguration(
+                    no_attachments=False,
+                    only_tree=False,
+                    exist_ok=True,
+                    skip_empty_quantities=False,
+                    skip_empty_entities=False,
+                    output_format=DumpOutputFormat.JSON,
+                    output_folder=temp_path,
+                ),
+                release_tag=str(self.tag),
+            )
+
+            with tarfile.open(f"{str(self.tag)}.tar", "w:gz") as tar:
+                for item in os.listdir(temp_path):
+                    item_path = os.path.join(temp_path, item)
+                    tar.add(item_path, arcname=item)
+
+            with open(f"{str(self.tag)}.tar", "rb") as f:
+                content = f.read()
+                self.tarball.delete(save=False)
+                self.tarball.save(
+                    name=f"schema_{self.tag}.tar.gz",
+                    content=ContentFile(content),
+                    save=False,
+                )
+
+        Release.objects.filter(pk=self.pk).update(json_file=self.json_file)
+        Release.objects.filter(pk=self.pk).update(tarball=self.tarball)
 
 
 ############################################################################
@@ -724,7 +764,6 @@ def dump_data_files(configuration: ReleaseDumpConfiguration, data_files):
                 ("spec_version", Quoted(cur_data_file.spec_version)),
             ]
         )
-
         if cur_data_file.metadata is not None and cur_data_file.metadata != "":
             cur_entry["metadata"] = json.loads(cur_data_file.metadata)
 
@@ -802,11 +841,11 @@ def save_schema(
         git_sha = "unknown"
 
     if release_tag:
-        release_tag = [Release.objects.get(tag=release_tag)]
-        data_files = release_tag[0].data_files.all()
+        release = [Release.objects.get(tag=release_tag)]
+        data_files = release[0].data_files.all()
     else:
         # If no release is specified, return *everything*
-        release_tag = Release.objects.all()
+        release = Release.objects.all()
         data_files = DataFile.objects.all()
 
     schema = OrderedDict(
@@ -862,7 +901,7 @@ def save_schema(
                 (
                     {}
                     if configuration.only_tree
-                    else dump_releases(configuration, release_tag)
+                    else dump_releases(configuration, release)
                 ),
             ),
         ]
@@ -911,33 +950,3 @@ def dump_db_to_json(
     )
 
     return output_schema_path
-
-
-def update_release_file_dumps(force: bool = False):
-    """
-    Update the field `json_file` for each `Release` object.
-    """
-
-    for cur_release in Release.objects.all():
-        if bool(cur_release.json_file) and (not force):
-            # The JSON dump already exists, and we are not required
-            # to recreate it, so let's skip this release
-            continue
-
-        with TemporaryDirectory() as tempdir:
-            temp_path = Path(tempdir)
-            json_file_path = dump_db_to_json(
-                ReleaseDumpConfiguration(
-                    no_attachments=True,
-                    exist_ok=True,
-                    output_format=DumpOutputFormat.JSON,
-                    output_folder=temp_path,
-                ),
-                release_tag=cur_release.tag,
-            )
-
-            with json_file_path.open("rt") as json_file:
-                cur_release.json_file.save(
-                    name=f"schema_{cur_release.tag}.json",
-                    content=open(json_file, "rb"),
-                )
