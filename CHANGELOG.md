@@ -1,6 +1,8 @@
 # HEAD
 
-# Versione 3.1.0
+- Add focal plane visualization, wiki page, including post generation tab on the admin page, automatic tarball generation when creating release, possibility to download tarball on release list page, overall refurbishing of website. [#6](https://github.com/litebird/instrumentdb/pull/6)
+
+# Version 3.1.0
 
 -   Ensure that data files are included in release JSON files [#166](https://github.com/ziotom78/instrumentdb/pull/166)
 

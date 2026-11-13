@@ -950,3 +950,68 @@ def dump_db_to_json(
     )
 
     return output_schema_path
+
+
+def update_release_file_dumps(force: bool = False):
+    """
+    Update the field `json_file` for each `Release` object.
+    """
+
+    for cur_release in Release.objects.all():
+        if bool(cur_release.json_file) and (not force):
+            # The JSON dump already exists, and we are not required
+            # to recreate it, so let's skip this release
+            continue
+
+        with TemporaryDirectory() as tempdir:
+            temp_path = Path(tempdir)
+            json_file_path = dump_db_to_json(
+                ReleaseDumpConfiguration(
+                    no_attachments=True,
+                    exist_ok=True,
+                    output_format=DumpOutputFormat.JSON,
+                    output_folder=temp_path,
+                ),
+                release_tag=cur_release.tag,
+            )
+
+            with json_file_path.open("rt") as json_file:
+                cur_release.json_file.save(
+                    name=f"schema_{cur_release.tag}.json",
+                    content=open(json_file, "rb"),
+                )
+
+
+def update_release_tarball(force: bool = False):
+    """
+    Update the field `tarball` for each `Release` object.
+    """
+
+    for cur_release in Release.objects.all():
+        if bool(cur_release.tarball) and (not force):
+            # The tarball already exists, and we are not required
+            # to recreate it, so let's skip this release
+            continue
+
+        with TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            tarball_path = dump_db_to_json(
+                ReleaseDumpConfiguration(
+                    no_attachments=False,
+                    only_tree=False,
+                    exist_ok=True,
+                    skip_empty_quantities=False,
+                    skip_empty_entities=False,
+                    output_format=DumpOutputFormat.JSON,
+                    output_folder=temp_path,
+                ),
+                release_tag=str(cur_release.tag),
+            )
+
+            with open(str(tarball_path), "rb") as tarball_file:
+                file_content = tarball_file.read()
+                cur_release.tarball.delete(save=False)
+                cur_release.tarball.save(
+                    ContentFile(file_content),
+                    save=False,
+                )

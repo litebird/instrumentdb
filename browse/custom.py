@@ -22,6 +22,7 @@ The way it is supposed to be used is the following:
 
 5. Deploy your fork using a webserver!
 """
+
 from typing import Any
 
 import json
