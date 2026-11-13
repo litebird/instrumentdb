@@ -14,6 +14,7 @@
           <th scope="col">Comment</th>
           <th scope="col">Document</th>
           <th scope="col">JSON file</th>
+          <th scope="col">Tarball</th>
       </tr>
       </thead>
       <tbody>
@@ -34,6 +35,11 @@
           <td>
               <a class="btn btn-primary" href="{% url 'release-download-view' obj.tag %}">
                 Download ({{ obj.json_file.size|filesizeformat }})
+              </a>
+          </td>
+          <td>
+              <a class="btn btn-primary" href="{% url 'tarball-download-view' obj.tag %}">
+                Download ({{ obj.tarball.size|filesizeformat }})
               </a>
           </td>
       </tr>

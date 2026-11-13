@@ -46,6 +46,7 @@ from browse.views import (
     browse_release_view,
     login_request,
     ReleaseDownloadView,
+    TarballDownloadView,
     UserView,
     entity_reference_view,
 )
@@ -99,6 +100,11 @@ urlpatterns = [
         "browse/releases/<pk>/download/",
         ReleaseDownloadView.as_view(),
         name="release-download-view",
+    ),
+    path(
+        "browse/releases/<pk>/download_tarball/",
+        TarballDownloadView.as_view(),
+        name="tarball-download-view",
     ),
     path(
         "browse/releases/<pk>/document/",

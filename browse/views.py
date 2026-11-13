@@ -251,6 +251,24 @@ class ReleaseDownloadView(LoginRequiredMixin, View):
         return resp
 
 
+class TarballDownloadView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        "Allow the user to download a release tarball"
+
+        cur_object = get_object_or_404(Release, pk=pk)
+        file_data = cur_object.tarball
+        file_data.open()
+        data = file_data.read()
+        resp = HttpResponse(
+            data,
+            content_type="application/json",
+        )
+        resp["Content-Disposition"] = 'attachment; filename="{0}.tar.gz"'.format(
+            cur_object.tag,
+        )
+        return resp
+
+
 ################################################################################
 # REST API
 
