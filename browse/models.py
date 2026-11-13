@@ -43,6 +43,7 @@ from typing import Optional
 import git
 import json
 import yaml
+import tarfile
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
@@ -50,6 +51,7 @@ from django.utils import timezone
 from mptt.models import MPTTModel, TreeForeignKey
 
 from instrumentdb import __version__
+
 
 # This is used to validate entity/quantity names, which are used in URLs
 QUANTITY_NAME_REGEXP = re.compile(r"[-a-zA-Z0-9@:%._\+~#=]{1,256}")
@@ -950,3 +952,70 @@ def dump_db_to_json(
     )
 
     return output_schema_path
+<<<<<<< HEAD
+=======
+
+
+def update_release_file_dumps(force: bool = False):
+    """
+    Update the field `json_file` for each `Release` object.
+    """
+
+    for cur_release in Release.objects.all():
+        if bool(cur_release.json_file) and (not force):
+            # The JSON dump already exists, and we are not required
+            # to recreate it, so let's skip this release
+            continue
+
+        with TemporaryDirectory() as tempdir:
+            temp_path = Path(tempdir)
+            json_file_path = dump_db_to_json(
+                ReleaseDumpConfiguration(
+                    no_attachments=True,
+                    exist_ok=True,
+                    output_format=DumpOutputFormat.JSON,
+                    output_folder=temp_path,
+                ),
+                release_tag=cur_release.tag,
+            )
+
+            with json_file_path.open("rt") as json_file:
+                cur_release.json_file.save(
+                    name=f"schema_{cur_release.tag}.json",
+                    content=open(json_file, "rb"),
+                )
+
+
+def update_release_tarball(force: bool = False):
+    """
+    Update the field `tarball` for each `Release` object.
+    """
+
+    for cur_release in Release.objects.all():
+        if bool(cur_release.tarball) and (not force):
+            # The tarball already exists, and we are not required
+            # to recreate it, so let's skip this release
+            continue
+
+        with TemporaryDirectory() as tempdir:
+            tarball_path = dump_db_to_json(
+                ReleaseDumpConfiguration(
+                    no_attachments=False,
+                    only_tree=False,
+                    exist_ok=True,
+                    skip_empty_quantities=False,
+                    skip_empty_entities=False,
+                    output_format=DumpOutputFormat.JSON,
+                    output_folder=temp_path,
+                ),
+                release_tag=str(self.tag),
+            )
+
+            with open(str(tarball_path), "rb") as tarball_file:
+                file_content = tarball_file.read()
+                self.tarball.delete(save=False)
+                self.tarball.save(
+                    ContentFile(file_content),
+                    save=False,
+                )
+>>>>>>> origin/allow_download_tarball
