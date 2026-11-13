@@ -952,8 +952,6 @@ def dump_db_to_json(
     )
 
     return output_schema_path
-<<<<<<< HEAD
-=======
 
 
 def update_release_file_dumps(force: bool = False):
@@ -1018,4 +1016,3 @@ def update_release_tarball(force: bool = False):
                     ContentFile(file_content),
                     save=False,
                 )
->>>>>>> origin/allow_download_tarball
