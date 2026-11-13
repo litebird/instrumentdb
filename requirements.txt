@@ -755,3 +755,6 @@ uritemplate==4.2.0 ; python_version >= "3.10" and python_version < "4.0" \
 urllib3==2.7.0 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c \
     --hash=sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897
+numpy==2.5.4 ;
+    --hash=sha256:9a94cf751c9ad8ebaa835bcd3d40dacf8534ad086b88c38029b65123c7999d2a
+
