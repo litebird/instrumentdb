@@ -610,39 +610,41 @@ def login_request(request):
         status=HTTP_200_OK,
     )
 
+
 def focal_plane_ui_view(request):
 
-    metadatas = DataFile.objects.filter(name='detector_info').values_list('metadata', flat=True)
-    uuids = DataFile.objects.filter(name='detector_info').values_list('uuid', flat=True)
+    metadatas = DataFile.objects.filter(name="detector_info").values_list(
+        "metadata", flat=True
+    )
+    uuids = DataFile.objects.filter(name="detector_info").values_list("uuid", flat=True)
     uuids = np.array([str(uuid) for uuid in uuids])
     pointing_u_v_list = []
-    channel=[]
-    pol=[]
-    ss= [150, 130, 85, 70, 40, 30]
-    sizes=[]
+    channel = []
+    pol = []
+    ss = [150, 130, 85, 70, 40, 30]
+    sizes = []
     for metadata_str in metadatas:
         metadata_dict = json.loads(metadata_str)
-        pointing_u_v = metadata_dict['pointing_u_v']
+        pointing_u_v = metadata_dict["pointing_u_v"]
         pointing_u_v_list.append(pointing_u_v)
-        channel.append(metadata_dict['channel'])
-        pol.append(int(np.rad2deg(metadata_dict['pol_angle_rad'])))
-        if metadata_dict['channel'][:2]=="L1":
-          sizes.append(1000/ss[5])
-        elif metadata_dict['channel'][:2]=="L2":
-          sizes.append(1000/ss[4])
-        elif metadata_dict['channel'][:2]=="M1":
-          sizes.append(1000/ss[3])
-        elif metadata_dict['channel'][:2]=="M2":
-          sizes.append(1000/ss[2])
-        elif metadata_dict['channel'][:2]=="H1":
-          sizes.append(1000/ss[1])
-        elif metadata_dict['channel'][:2]=="H2":
-          sizes.append(1000/ss[0])
+        channel.append(metadata_dict["channel"])
+        pol.append(int(np.rad2deg(metadata_dict["pol_angle_rad"])))
+        if metadata_dict["channel"][:2] == "L1":
+            sizes.append(1000 / ss[5])
+        elif metadata_dict["channel"][:2] == "L2":
+            sizes.append(1000 / ss[4])
+        elif metadata_dict["channel"][:2] == "M1":
+            sizes.append(1000 / ss[3])
+        elif metadata_dict["channel"][:2] == "M2":
+            sizes.append(1000 / ss[2])
+        elif metadata_dict["channel"][:2] == "H1":
+            sizes.append(1000 / ss[1])
+        elif metadata_dict["channel"][:2] == "H2":
+            sizes.append(1000 / ss[0])
 
-
-    pol=np.array(pol)
-    sizes=np.array(sizes)
-    channel=np.array(channel)
+    pol = np.array(pol)
+    sizes = np.array(sizes)
+    channel = np.array(channel)
     x_values = np.array([point[0] for point in pointing_u_v_list])
     y_values = np.array([point[1] for point in pointing_u_v_list])
 
@@ -668,20 +670,19 @@ def focal_plane_ui_view(request):
         indices = coord_to_indices[coord_tuple]
         uuids_unique[i] = uuids[indices]
 
-
     uuids_list = [list(uuid_array) for uuid_array in uuids_unique]
 
     context = {
-        'x_values': json.dumps(x_unique.tolist()),
-        'y_values': json.dumps(y_unique.tolist()),
-        'uuids': json.dumps(uuids_list),
-        'channel': json.dumps(channel[unique_indices].tolist()),
-        'pol': json.dumps(pol[unique_indices].tolist()),
-        'size': json.dumps(sizes[unique_indices].tolist()),
+        "x_values": json.dumps(x_unique.tolist()),
+        "y_values": json.dumps(y_unique.tolist()),
+        "uuids": json.dumps(uuids_list),
+        "channel": json.dumps(channel[unique_indices].tolist()),
+        "pol": json.dumps(pol[unique_indices].tolist()),
+        "size": json.dumps(sizes[unique_indices].tolist()),
     }
 
+    return render(request, "browse/focalplane_ui.html", context)
 
-    return render(request, 'browse/focalplane_ui.html', context)
 
 from django.http import JsonResponse
 
@@ -690,24 +691,28 @@ import json
 import logging
 
 logger = logging.getLogger(__name__)
+
+
 def handle_plot_click(request):
     try:
-        uuid_string = request.GET.get('uuid')
+        uuid_string = request.GET.get("uuid")
 
         if not uuid_string:
-            return JsonResponse({'error': 'uuid parameter is required'}, status=400)
+            return JsonResponse({"error": "uuid parameter is required"}, status=400)
 
-        uuids = [u.strip() for u in uuid_string.split(',')]
+        uuids = [u.strip() for u in uuid_string.split(",")]
 
-        data_queryset = DataFile.objects.filter(uuid__in=uuids).values('uuid', 'metadata')
+        data_queryset = DataFile.objects.filter(uuid__in=uuids).values(
+            "uuid", "metadata"
+        )
 
         if not data_queryset.exists():
-            return JsonResponse({'error': 'No data found for these uuids'}, status=404)
+            return JsonResponse({"error": "No data found for these uuids"}, status=404)
 
         result = {}
         for item in data_queryset:
-            uuid_key = str(item['uuid'])
-            metadata = item['metadata']
+            uuid_key = str(item["uuid"])
+            metadata = item["metadata"]
 
             if isinstance(metadata, str):
                 result[uuid_key] = json.loads(metadata)
@@ -718,14 +723,15 @@ def handle_plot_click(request):
 
     except Exception as e:
         logger.error(f"Error in handle_plot_click: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 def get_full_path(request):
     try:
-        uuid_string = request.GET.get('uuid')
+        uuid_string = request.GET.get("uuid")
 
         if not uuid_string:
-            return JsonResponse({'error': 'uuid parameter is required'}, status=400)
+            return JsonResponse({"error": "uuid parameter is required"}, status=400)
 
         obj = DataFile.objects.filter(uuid=uuid_string)
         print(obj[0])
@@ -734,4 +740,4 @@ def get_full_path(request):
 
     except Exception as e:
         logger.error(f"Error in get_full_path: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)

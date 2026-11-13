@@ -118,12 +118,7 @@ urlpatterns = [
         FormatSpecificationDownloadView.as_view(),
         name="format-spec-download-view",
     ),
-    path(
-        "focalplane_ui/",
-        focal_plane_ui_view,
-        name="focal-plane-ui-view"
-    ),
-
+    path("focalplane_ui/", focal_plane_ui_view, name="focal-plane-ui-view"),
     re_path(
         r"^releases/(?P<rel_name>[\w.-]+)/(?P<reference>[\w./-]+)/$", api_release_view
     ),
@@ -143,23 +138,8 @@ urlpatterns = [
         schema_view.with_ui("swagger", cache_timeout=0),
         name="schema-swagger-ui",
     ),
-    path(
-        "redoc/",
-        schema_view.with_ui("redoc", cache_timeout=0),
-        name="schema-redoc"
-    ),
-
-    path(
-        "handle-plot-click/",
-        handle_plot_click,
-        name="handle-plot-click"
-    ),
-
-    path(
-        "get-full-path/",
-        get_full_path,
-        name="get-full-path"
-    ),
+    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    path("handle-plot-click/", handle_plot_click, name="handle-plot-click"),
+    path("get-full-path/", get_full_path, name="get-full-path"),
     path("blog/", include("blog.urls")),
-
 ]
