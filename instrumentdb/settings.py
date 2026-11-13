@@ -108,11 +108,14 @@ INSTALLED_APPS = [
     "sslserver",
     "drf_yasg",
     "active_link",
+    "blog",
+    "markdownify.apps.MarkdownifyConfig",
     "django_cleanup.apps.CleanupConfig",  # This must be the last one!
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",

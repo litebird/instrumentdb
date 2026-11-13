@@ -43,7 +43,6 @@ from typing import Optional
 import git
 import json
 import yaml
-import tarfile
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models
@@ -51,7 +50,6 @@ from django.utils import timezone
 from mptt.models import MPTTModel, TreeForeignKey
 
 from instrumentdb import __version__
-
 
 # This is used to validate entity/quantity names, which are used in URLs
 QUANTITY_NAME_REGEXP = re.compile(r"[-a-zA-Z0-9@:%._\+~#=]{1,256}")
@@ -995,7 +993,8 @@ def update_release_tarball(force: bool = False):
             # to recreate it, so let's skip this release
             continue
 
-        with TemporaryDirectory() as tempdir:
+        with TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
             tarball_path = dump_db_to_json(
                 ReleaseDumpConfiguration(
                     no_attachments=False,
@@ -1006,13 +1005,13 @@ def update_release_tarball(force: bool = False):
                     output_format=DumpOutputFormat.JSON,
                     output_folder=temp_path,
                 ),
-                release_tag=str(self.tag),
+                release_tag=str(cur_release.tag),
             )
 
             with open(str(tarball_path), "rb") as tarball_file:
                 file_content = tarball_file.read()
-                self.tarball.delete(save=False)
-                self.tarball.save(
+                cur_release.tarball.delete(save=False)
+                cur_release.tarball.save(
                     ContentFile(file_content),
                     save=False,
                 )

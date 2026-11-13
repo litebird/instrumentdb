@@ -1,31 +1,149 @@
 {% extends "browse/base_generic.html" %}
+{% load markdownify %}
 
-{% block title %}Wiki{% endblock %}
+{% block title %}Wiki Page{% endblock %}
 
 {% block body %}
-<!--
-<h1>Focal Plane UI</h1>
-<p>This page displays a LiteBIRD Focal Plane interactive visualization tool.</p>
--->
+<style>
+  .blog-page {
+    --blog-ink: #172b3a;
+    --blog-muted: #657787;
+    --blog-accent: #176b87;
+    --blog-line: #dce5ea;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 3rem 1.25rem 5rem;
+    color: var(--blog-ink);
+  }
 
-<main class="blog">
-    <h1>Wiki</h1>
+  .blog-hero {
+    padding: clamp(1rem, 3vw, 2.5rem);
+    margin-bottom: 1.5rem;
+    border-radius: 1.25rem;
+    background: linear-gradient(135deg, #e8f4f7, #f3f0e9);
+  }
 
-    {% for post in posts %}
-        <article class="blog-post">
-            <h2>
-                <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
-            </h2>
-            <p class="blog-post-date">
-                {{ post.published_at|date:"F j, Y" }}
-            </p>
-            <div class="blog-post-excerpt">
-                {{ post.body|truncatewords:40|linebreaks }}
-            </div>
+  .blog-eyebrow {
+    margin: 0 0 .75rem;
+    color: var(--blog-accent);
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .blog-hero h1 {
+    max-width: 700px;
+    margin: 0;
+    font-size: clamp(2.4rem, 6vw, 4.5rem);
+    line-height: 1.05;
+  }
+
+  .blog-intro {
+    max-width: 620px;
+    margin: 1rem 0 0;
+    color: var(--blog-muted);
+    font-size: 1.1rem;
+    line-height: 1.7;
+  }
+
+  .blog-posts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .blog-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 250px;
+    padding: 1.5rem;
+    border: 1px solid var(--blog-line);
+    border-radius: 1rem;
+    background: #fff;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  .blog-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgb(23 43 58 / 9%);
+  }
+
+  .blog-card-date {
+    margin: 0 0 .75rem;
+    color: var(--blog-muted);
+    font-size: .9rem;
+  }
+
+  .blog-card h2 {
+    margin: 0 0 .75rem;
+    font-size: 1.4rem;
+    line-height: 1.3;
+  }
+
+  .blog-card h2 a {
+    color: var(--blog-ink);
+    text-decoration: none;
+  }
+
+  .blog-card h2 a:hover {
+    color: var(--blog-accent);
+  }
+
+  .blog-card-excerpt {
+    color: var(--blog-muted);
+    line-height: 1.65;
+  }
+
+  .blog-card-link {
+    margin-top: auto;
+    padding-top: 1rem;
+    color: var(--blog-accent);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .blog-card-link:hover {
+    text-decoration: underline;
+  }
+
+  .blog-empty {
+    padding: 2rem;
+    border: 1px dashed var(--blog-line);
+    border-radius: 1rem;
+    color: var(--blog-muted);
+    text-align: center;
+  }
+</style>
+
+<main class="blog-page">
+    <h2>Wiki Page</h2>
+	<p>See below detailed information about each release.</p>
+
+  {% if posts %}
+    <section class="blog-posts" aria-label="Blog posts">
+      {% for post in posts %}
+        <article class="blog-card">
+          <p class="blog-card-date">
+            {{ post.published_at|date:"F j, Y" }}
+          </p>
+
+          <h2>
+            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+          </h2>
+
+          <div class="blog-card-excerpt">
+            {{ post.body|truncatewords:35|markdownify }}
+          </div>
+
+          <a class="blog-card-link" href="{{ post.get_absolute_url }}">
+            Read post &rarr;
+          </a>
         </article>
-    {% empty %}
-        <p>No wiki posts have been published yet.</p>
-    {% endfor %}
+      {% endfor %}
+    </section>
+  {% else %}
+    <p class="blog-empty">No posts have been published yet. Check back soon.</p>
+  {% endif %}
 </main>
 {% endblock %}
-

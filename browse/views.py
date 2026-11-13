@@ -704,8 +704,6 @@ def focal_plane_ui_view(request):
 
 from django.http import JsonResponse
 
-from django.http import JsonResponse
-import json
 import logging
 
 logger = logging.getLogger(__name__)
