@@ -191,7 +191,12 @@
                   Focal Plane
               </a>
             </li>
-          </ul>
+            <li class="nav-item {% active_link 'blog:list' 'active' strict=True %}">
+              <a class="nav-link" href="{% url 'blog:list' %}">
+                  Wiki
+              </a>
+            </li>
+         </ul>
         </div>
 
         <!-- User Content in the header, top right -->

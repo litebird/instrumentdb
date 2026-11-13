@@ -1,0 +1,23 @@
+{% extends "browse/base_generic.html" %}
+
+{% block title %}{{ post.title }} | Blog{% endblock %}
+
+{% block body %}
+<main class="blog-post">
+    <article>
+        <h1>{{ post.title }}</h1>
+        <p class="blog-post-date">
+            {{ post.published_at|date:"F j, Y" }}
+        </p>
+
+        <div class="blog-post-body">
+            {{ post.body|linebreaks }}
+        </div>
+    </article>
+
+    <p>
+        <a href="{% url 'blog:list' %}">← Back to the blog</a>
+    </p>
+</main>
+{% endblock %}
+

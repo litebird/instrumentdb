@@ -160,5 +160,6 @@ urlpatterns = [
         get_full_path,
         name="get-full-path"
     ),
+    path("blog/", include("blog.urls")),
 
 ]

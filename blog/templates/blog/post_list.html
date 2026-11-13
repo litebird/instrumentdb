@@ -1,0 +1,31 @@
+{% extends "browse/base_generic.html" %}
+
+{% block title %}Wiki{% endblock %}
+
+{% block body %}
+<!--
+<h1>Focal Plane UI</h1>
+<p>This page displays a LiteBIRD Focal Plane interactive visualization tool.</p>
+-->
+
+<main class="blog">
+    <h1>Wiki</h1>
+
+    {% for post in posts %}
+        <article class="blog-post">
+            <h2>
+                <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+            </h2>
+            <p class="blog-post-date">
+                {{ post.published_at|date:"F j, Y" }}
+            </p>
+            <div class="blog-post-excerpt">
+                {{ post.body|truncatewords:40|linebreaks }}
+            </div>
+        </article>
+    {% empty %}
+        <p>No wiki posts have been published yet.</p>
+    {% endfor %}
+</main>
+{% endblock %}
+
