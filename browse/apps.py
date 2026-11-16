@@ -6,4 +6,4 @@ class BrowseConfig(AppConfig):
 
     def ready(self):
         # We import signals to register them
-        import browse.signals
+        pass

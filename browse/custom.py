@@ -33,7 +33,6 @@ import json
 # The field context["object"] is the instance the Entity class
 def create_entity_view_context(context):
     """Create the context to render a :class:`EntityListView`"""
-    pass
 
 
 # This is used to prepare the context for the template
@@ -41,7 +40,6 @@ def create_entity_view_context(context):
 # The field context["object"] is the instance the Quantity class
 def create_quantity_view_context(context):
     """Create the context to render a :class:`QuantityView`"""
-    pass
 
 
 # This is used to prepare the context for the template
@@ -49,7 +47,6 @@ def create_quantity_view_context(context):
 # The field context["object"] is the instance the DataFile class
 def create_datafile_view_context(context):
     """Create the context to render a :class:`DataFileView`"""
-    pass
 
 
 def extract_info_from_metadata(
@@ -171,4 +168,3 @@ def create_release_view_context(context):
 # borwse/templates/browse/release_list.html
 def create_release_listview_context(context):
     """Create the context to render a :class:`ReleaseListView`"""
-    pass

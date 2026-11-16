@@ -48,6 +48,12 @@ from instrumentdb.authentication import (
     is_token_expired,
 )
 
+from django.http import JsonResponse
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 ADMIN_ONLY_HTTP_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
 
 mimetypes.init()
@@ -700,13 +706,6 @@ def focal_plane_ui_view(request):
     }
 
     return render(request, "browse/focalplane_ui.html", context)
-
-
-from django.http import JsonResponse
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 def handle_plot_click(request):

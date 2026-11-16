@@ -44,7 +44,6 @@ import git
 import json
 import yaml
 from django.core.exceptions import ValidationError
-from django.core.files import File
 from django.db import models
 from django.utils import timezone
 from mptt.models import MPTTModel, TreeForeignKey

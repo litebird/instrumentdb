@@ -2,7 +2,7 @@
 
 from pathlib import Path
 import json
-from typing import Any, List, Dict
+from typing import List, Dict
 from uuid import UUID
 import yaml
 from django.db.models.signals import m2m_changed
