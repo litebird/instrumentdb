@@ -15,43 +15,31 @@ jobs:
       - name: "Checkout the repository"
         uses: actions/checkout@v2
 
-      - name: "Setup Python"
-        uses: actions/setup-python@v2
+      - name: "Set up uv and Python"
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: ${{ matrix.python }}
+          enable-cache: true
 
-      - name: "Upgrade pip"
-        run: pip install --upgrade pip
-
-      - name: "Install Poetry and export dependencies to requirements.txt"
-        run: |
-          export POETRY_HOME=/opt/poetry
-          python3 -m venv $POETRY_HOME
-          $POETRY_HOME/bin/pip install poetry==1.5.1
-          $POETRY_HOME/bin/poetry --version
-          $POETRY_HOME/bin/poetry export --without-hashes -o requirements.txt
-
-      - name: "Install dependencies using pip"
-        run: |
-          pip install -r requirements.txt
+      - name: "Install dependencies"
+        run: uv sync --locked
 
       - name: "Check that the code is formatted using black"
-        run: black --check --diff .
+        run: uv run black --check --diff .
 
       - name: "Run flake8"
-        run: python3 -m flake8
+        run: uv run python -m flake8
 
       - name: "Create a configuration file for Django"
         run: |
           export DB_PATH=$HOME/db
-          mkdir -p $DB_PATH
+          mkdir -p "$DB_PATH"
           cp .env.example .env
           sed -i 's/SECRET_KEY=""/SECRET_KEY="deadmeat"/g' .env
-          sed -i 's/LOG_FILE_PATH=.*/LOG_FILE_PATH=$DB_PATH\/mylog.txt/g' .env
-          sed -i 's/STORAGE_PATH=.*/STORAGE_PATH=$DB_PATH\/storage/g' .env
-          sed -i 's/STORAGE_PATH=.*/DATABASE_URL=$DB_PATH\/storage\/instrumentdb.sqlite3/g' .env
-          sed -i 's/STATIC_PATH=.*/STORAGE_PATH=$DB_PATH\/storage\/static/g' .env
-          cat .env
+          sed -i "s|LOG_FILE_PATH=.*|LOG_FILE_PATH=$DB_PATH/mylog.txt|g" .env
+          sed -i "s|STORAGE_PATH=.*|STORAGE_PATH=$DB_PATH/storage|g" .env
+          sed -i "s|DATABASE_URL=.*|DATABASE_URL=$DB_PATH/storage/instrumentdb.sqlite3|g" .env
+          sed -i "s|STATIC_PATH=.*|STATIC_PATH=$DB_PATH/storage/static|g" .env
 
       - name: "Run tests"
-        run: python3 manage.py test
+        run: uv run python manage.py test
