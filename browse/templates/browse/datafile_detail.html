@@ -51,15 +51,22 @@
 </div>
 
 {% if object.metadata %}
-<div class="row">
-  <pre>
-    <code class="json">
-{% autoescape on %}
-{{ object.metadata|format_json }}
-{% endautoescape %}
-    </code>
-  </pre>
-</div>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Field</th>
+      <th scope="col">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for key, value in object.metadata|metadata_items %}
+    <tr>
+      <th scope="row">{{ key }}</th>
+      <td><code>{{ value|display_metadata_value }}</code></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endif %}
 
 {% if object.release_tags.all %}

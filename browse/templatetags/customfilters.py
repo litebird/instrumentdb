@@ -21,3 +21,23 @@ def format_json(value):
         pass
 
     return value
+
+@register.filter
+def metadata_items(value):
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError:
+            return []
+
+    if isinstance(value, dict):
+        return value.items()
+
+    return []
+
+
+@register.filter
+def display_metadata_value(value):
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, indent=2, ensure_ascii=False)
+    return value
