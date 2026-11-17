@@ -110,6 +110,8 @@ INSTALLED_APPS = [
     "active_link",
     "blog",
     "markdownify.apps.MarkdownifyConfig",
+    "allauth",
+    "allauth.account",
     "django_cleanup.apps.CleanupConfig",  # This must be the last one!
 ]
 
@@ -121,6 +123,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
 ]
