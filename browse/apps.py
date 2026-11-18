@@ -5,5 +5,4 @@ class BrowseConfig(AppConfig):
     name = "browse"
 
     def ready(self):
-        # We import signals to register them
-        pass
+        from . import signals  # noqa: F401

@@ -1,0 +1,21 @@
+{% extends "browse/base_generic.html" %}
+
+{% block title %}Confirm Email Address{% endblock %}
+
+{% block body %}
+<h2>Confirm your email address</h2>
+
+{% if confirmation %}
+  {% if can_confirm %}
+    <p>Click below to confirm your email address.</p>
+    <form method="post" action="{% url 'account_confirm_email' confirmation.key %}">
+      {% csrf_token %}
+      <button type="submit">Confirm email</button>
+    </form>
+  {% else %}
+    <p>This email address is already associated with another account.</p>
+  {% endif %}
+{% else %}
+  <p>This confirmation link is invalid or has expired. Please request a new one.</p>
+{% endif %}
+{% endblock %}

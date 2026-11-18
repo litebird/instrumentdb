@@ -134,7 +134,6 @@ urlpatterns = [
     ),
     re_path(r"^tree/(?P<reference>[\w./-]+)/$", entity_reference_view),
     path("api/login", login_request),
-    path("accounts/", include("django.contrib.auth.urls")),
     # OpenAPI available as Swagger and ReDoc pages
     path(
         "swagger<format>/", schema_view.without_ui(cache_timeout=0), name="schema-json"
@@ -148,4 +147,5 @@ urlpatterns = [
     path("handle-plot-click/", handle_plot_click, name="handle-plot-click"),
     path("get-full-path/", get_full_path, name="get-full-path"),
     path("blog/", include("blog.urls")),
+    path("accounts/", include("allauth.urls")),
 ]

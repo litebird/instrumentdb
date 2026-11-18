@@ -103,13 +103,15 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "mptt",
-    "browse",
+    "browse.apps.BrowseConfig",
     "rest_framework.authtoken",
     "sslserver",
     "drf_yasg",
     "active_link",
     "blog",
     "markdownify.apps.MarkdownifyConfig",
+    "allauth",
+    "allauth.account",
     "django_cleanup.apps.CleanupConfig",  # This must be the last one!
 ]
 
@@ -121,6 +123,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.gzip.GZipMiddleware",
 ]
@@ -183,6 +186,21 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+# For the user registration validation
+ACCOUNT_ADAPTER = "browse.adapters.ApprovalAccountAdapter"
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+
+# SMTP settings for account registration and password reset
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "127.0.0.1"
+EMAIL_PORT = 25
+EMAIL_HOST_USER = ""
+EMAIL_HOST_PASSWORD = ""
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = False
+DEFAULT_FROM_EMAIL = "LiteBIRD Instrument Model Database <no-reply@lbimodb.com>"
 
 
 # Internationalization

@@ -1,0 +1,25 @@
+{% extends "browse/base_generic.html" %}
+
+{% block title %}Log In{% endblock %}
+
+{% block body %}
+<h2>Log In</h2>
+
+<p>
+  After confirming your email, your account must still be approved by an
+  administrator before you can log in.
+</p>
+
+<form method="post" action="{% url 'account_login' %}">
+  {% csrf_token %}
+  {{ form.as_p }}
+
+  {% if redirect_field_value %}
+    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+  {% endif %}
+
+  <button type="submit">Log In</button>
+</form>
+
+{# Keep your existing password-reset and registration links here. #}
+{% endblock %}
