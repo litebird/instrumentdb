@@ -318,6 +318,19 @@ wheels = [
 ]
 
 [[package]]
+name = "django-allauth"
+version = "65.22.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asgiref" },
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/20/d7/fd2e9622eeb6f2dffd005fc478a3de22e4bd9e91518dca33c145ce0f514b/django_allauth-65.22.1.tar.gz", hash = "sha256:b05e20b8f511066c97ed98491520a2ca0319ef16d7f27feed9f688cc6877a8ba", size = 2352989, upload-time = "2026-11-13T09:25:16.184Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7e/15/f7bd5323ed1f83869f902033faa1630eb1d4e24d220ac5372e82f7600474/django_allauth-65.22.1-py3-none-any.whl", hash = "sha256:08f7a3ddbd5ff7f1000d685dee9c0678d0da2057e18bed473a6eb2de18bd04e4", size = 2116758, upload-time = "2026-11-13T09:25:13.281Z" },
+]
+
+[[package]]
 name = "django-cleanup"
 version = "9.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -551,6 +564,7 @@ dependencies = [
     { name = "coverage" },
     { name = "django" },
     { name = "django-active-link" },
+    { name = "django-allauth" },
     { name = "django-cleanup" },
     { name = "django-filter" },
     { name = "django-markdownify" },
@@ -585,6 +599,7 @@ requires-dist = [
     { name = "coverage", specifier = ">=7.2.7,<9" },
     { name = "django", specifier = ">=5.2,<6" },
     { name = "django-active-link", specifier = ">=0.1.8,<1" },
+    { name = "django-allauth", specifier = ">=65.22.1" },
     { name = "django-cleanup", specifier = ">=8.0.0,<10" },
     { name = "django-filter", specifier = ">=2.2.0,<4" },
     { name = "django-markdownify", specifier = ">=0.9.7,<1" },
