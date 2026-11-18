@@ -22,6 +22,7 @@ def format_json(value):
 
     return value
 
+
 @register.filter
 def metadata_items(value):
     if isinstance(value, str):

@@ -147,5 +147,5 @@ urlpatterns = [
     path("handle-plot-click/", handle_plot_click, name="handle-plot-click"),
     path("get-full-path/", get_full_path, name="get-full-path"),
     path("blog/", include("blog.urls")),
-    path('accounts/', include('allauth.urls')),
+    path("accounts/", include("allauth.urls")),
 ]

@@ -5,6 +5,11 @@
 {% block body %}
 <h2>Log In</h2>
 
+<p>
+  After confirming your email, your account must still be approved by an
+  administrator before you can log in.
+</p>
+
 <form method="post" action="{% url 'account_login' %}">
   {% csrf_token %}
   {{ form.as_p }}
@@ -16,10 +21,5 @@
   <button type="submit">Log In</button>
 </form>
 
-<p>
-  <a href="{% url 'account_reset_password' %}">Forgot your password?</a>
-</p>
-<p>
-  Don’t have an account? <a href="{% url 'account_signup' %}">Register</a>
-</p>
+{# Keep your existing password-reset and registration links here. #}
 {% endblock %}

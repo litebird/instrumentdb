@@ -3,6 +3,7 @@
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from browse.models import Release
+from allauth.account.signals import email_confirmed
 
 
 @receiver(m2m_changed, sender=Release.data_files.through)
@@ -22,3 +23,10 @@ def update_release_json_on_m2m(sender, instance, action, reverse, pk_set, **kwar
                 for release_tag in pk_set:
                     release = Release.objects.get(pk=release_tag)
                     release.generate_json_dump()
+
+
+@receiver(email_confirmed)
+def deactivate_pending_user(request, email_address, **kwargs):
+    user = email_address.user
+    user.is_active = False
+    user.save(update_fields=["is_active"])

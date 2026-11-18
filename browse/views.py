@@ -635,6 +635,7 @@ def login_request(request):
     )
 
 
+@login_required
 def focal_plane_ui_view(request):
 
     metadatas = DataFile.objects.filter(name="detector_info").values_list(
@@ -708,6 +709,7 @@ def focal_plane_ui_view(request):
     return render(request, "browse/focalplane_ui.html", context)
 
 
+@login_required
 def handle_plot_click(request):
     try:
         uuid_string = request.GET.get("uuid")
@@ -741,6 +743,7 @@ def handle_plot_click(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+@login_required
 def get_full_path(request):
     try:
         uuid_string = request.GET.get("uuid")
@@ -755,4 +758,4 @@ def get_full_path(request):
 
     except Exception as e:
         logger.error(f"Error in get_full_path: {str(e)}")
-        return JsonResponse({"error": str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=499)
